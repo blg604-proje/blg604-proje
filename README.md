@@ -1,4 +1,4 @@
-# simstar_env
+# SimStar Environment Setup
 
 Download Simstar from the link:
 
