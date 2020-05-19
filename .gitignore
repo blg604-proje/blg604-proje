@@ -3,5 +3,5 @@
 *.pyc
 */build/*
 */dist/*
-*.egg-info/*
+*.egg-info*
 *pkl
