@@ -29,6 +29,8 @@ There are multiple stages that needs to be checked.
 
 Open the simstar executable, allow for networking if asked. 
 
+![opening_screen](PythonAPI/img/opening_screen.png)
+
 ### 2. Test PythonAPI installation
 
 Run the following with success.
@@ -46,12 +48,5 @@ Run the following with success.
 
 ### Optional Test
 
-To test a closed loop training with Tensorflow, you can run the example DDPG agent adapted from this repository.
+To test a closed loop training with Pytorch, you can run the example DDPG agent from examples folder.
 
-	
-#### Requirements:
-  Tensorflow 1.12
-
-      cd example_ddpg
-
-      python playGame_DDPG.py
