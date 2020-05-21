@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import gym
 import random
+import time
+import os
 from collections import namedtuple
 from collections import defaultdict
 from agent.ddpg import Ddpg
@@ -11,6 +13,10 @@ from agent.random_process import OrnsteinUhlenbeckProcess
 from simstarEnv import SimstarEnv
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+SAVE_MODEL_EACH = 50
+START_FROM_CHECKPOINT = True
+SAVE_FOLDER = "checkpoints/"
 
 def train():
     env = SimstarEnv()
@@ -39,7 +45,12 @@ def train():
     valuenet = DoubleInputNet(insize, outsize, 1)
     policynet = SimpleNet(insize, outsize, activation=torch.nn.functional.tanh)
     agent = Ddpg(valuenet, policynet, buffersize=hyprm.buffersize)
+    step_counter = 0
     agent.to(device)
+    if(START_FROM_CHECKPOINT):
+        step_counter = load_checkpont(agent)
+
+    
 
     for eps in range(hyprm.episodes):
         obs = env.reset()
@@ -72,6 +83,10 @@ def train():
             if done:
                 break
             state = next_state
+            step_counter+=1
+            if not np.mod(step_counter,SAVE_MODEL_EACH):
+                save_checkpoint(agent,step_counter)
+                
         datalog["epsiode length"].append(i)
         datalog["total reward"].append(epsisode_reward)
 
@@ -81,6 +96,29 @@ def train():
     print("")
 
 
+def save_checkpoint(agent,step_counter):
+    if not os.path.exists(SAVE_FOLDER):
+        os.makedirs(SAVE_FOLDER)
+    path = SAVE_FOLDER + "checkpoint.dat"
+    torch.save({
+                'steps': step_counter,
+                'agent_state_dict': agent.state_dict(),
+                'opt_policy_state_dict': agent.opt_policy.state_dict(),
+                'opt_value_state_dict':agent.opt_value.state_dict(),
+                }, path)
+
+def load_checkpont(agent):
+    steps = 0
+    path = SAVE_FOLDER + "checkpoint.dat"
+    try:
+        checkpoint = torch.load(path)
+        agent.load_state_dict(checkpoint['agent_state_dict'])
+        agent.opt_policy.load_state_dict(checkpoint['opt_policy_state_dict'])
+        agent.opt_value.load_state_dict(checkpoint['opt_value_state_dict'])
+        steps = int(checkpoint['steps'])
+    except FileNotFoundError:
+        print("checkpoint not found")
+    return steps
 
 if __name__ == "__main__":
     train()
