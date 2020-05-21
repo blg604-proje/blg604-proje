@@ -70,7 +70,7 @@ class SimstarEnv(gym.Env):
         
         # action space: [steer, accel, brake]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,))
-        self.default_action = [0.0,0.5,0.0]
+        self.default_action = [0.0,0.0,0.0]
 
 
     def apply_settings(self):
@@ -101,7 +101,7 @@ class SimstarEnv(gym.Env):
         track_sensor_settings = simstar.DistanceSensorParameters(enable = True, 
             draw_debug = False,
             add_noise = False, location_x = 0.0, location_y = 0.0,
-            location_z = 0.05, yaw_angle = 0, minimum_distance = 0.2,
+            location_z = 0.05, yaw_angle = np.pi*10/360, minimum_distance = 0.2,
             maximum_distance = 200.0, fov = 190.0, 
             update_frequency_in_hz = 60.0,
             number_of_returns=self.track_sensor_size,query_type=simstar.QueryType.Static)
@@ -110,7 +110,7 @@ class SimstarEnv(gym.Env):
         opponent_sensor_settings = simstar.DistanceSensorParameters(enable = True, 
             draw_debug = False,
             add_noise = False, location_x = 2.0, location_y = 0.0,
-            location_z = 0.4, yaw_angle = 0, minimum_distance = 0.0,
+            location_z = 0.4, yaw_angle = -np.pi/2, minimum_distance = 0.0,
             maximum_distance = 200.0, fov = 360.0, 
             update_frequency_in_hz = 60.0,
             number_of_returns=self.opponent_sensor_size,query_type=simstar.QueryType.Dynamic)
@@ -200,7 +200,7 @@ class SimstarEnv(gym.Env):
         steer = float(action[0])
         throttle = float(action[1])
         brake = float(action[2])
-        steer = steer/2
+        steer = steer/4
         brake = brake/16
         if(throttle>0.5):
             brake=0.0
@@ -228,7 +228,9 @@ class SimstarEnv(gym.Env):
         track = self.track_sensor.get_sensor_detections()
         road_deviation = self.main_vehicle.get_road_deviation_info()
         if(len(track)!=self.track_sensor_size):
+            time.sleep(0.2)
             track = self.track_sensor.get_sensor_detections()
+            
 
         speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
         speed_y_kmh = 0.0
@@ -259,3 +261,4 @@ class SimstarEnv(gym.Env):
 
 if __name__ == "__main__":
     env = SimstarEnv()
+    env.reset()
