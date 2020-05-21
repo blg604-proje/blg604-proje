@@ -43,7 +43,7 @@ class Client():
     def reset_level(self):
         self.client.call("OpenHighway")
         self.client.close()
-        del self.client()
+        del self.client
         time.sleep(3) 
         self.client = msgpackrpc.Client(msgpackrpc.Address(self.host, \
                     self.port), timeout = 5, \
