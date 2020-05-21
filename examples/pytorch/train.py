@@ -14,7 +14,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train():
     env = SimstarEnv()
-    insize = env.observation_space.shape[0]
+    # total length of chosen observation states
+    insize = 23
     outsize = env.action_space.shape[0]
     hyperparams = {
                 "lrvalue": 0.001,
@@ -41,7 +42,10 @@ def train():
     agent.to(device)
 
     for eps in range(hyprm.episodes):
-        state = env.reset(relaunch=eps%100 == 0, render=False, sampletrack=False)
+        obs = env.reset()
+        state = np.hstack((obs.angle, obs.track,
+                    obs.trackPos, obs.speedX, obs.speedY))
+
         epsisode_reward = 0
         episode_value = 0
         sigma = (hyprm.start_sigma-hyprm.end_sigma)*(max(0, 1-eps/hyprm.episodes)) + hyprm.end_sigma
@@ -51,9 +55,12 @@ def train():
             action, value = agent.act(torch_state)
             action = randomprocess.noise() + action.to("cpu").squeeze()
             action.clamp_(-1, 1)
-            action[1] = (action[1]+1)/2
-            next_state, reward, done, _ = env.step(np.concatenate([action[:2], [-1]]))
+            obs, reward, done, _ = env.step(action.detach().numpy())
+            next_state = np.hstack((obs.angle, obs.track,
+                    obs.trackPos, obs.speedX, obs.speedY))
+
             agent.push(state, action, reward, next_state, done)
+
             epsisode_reward += reward
 
             if len(agent.buffer) > hyprm.batchsize:

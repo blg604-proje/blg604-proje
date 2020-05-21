@@ -31,6 +31,8 @@ class SimstarEnv(gym.Env):
         self.default_speed = 50
         self.road_width = 6.5 * width_scale
 
+        self.track_sensor_size = 19
+        self.opponent_sensor_size = 36
         self.track_name = track 
         self.synronized_mode = synronized_mode
         self.speed_up = speed_up
@@ -63,15 +65,12 @@ class SimstarEnv(gym.Env):
 
         # a list contaning all vehicles 
         self.actor_list = []
-
-        #input space. 
-        high = np.array([np.inf, np.inf,  1., 1.])
-        low = np.array([-np.inf, -np.inf, 0., 0.])
-        self.observation_space = spaces.Box(low=low, high=high)
+        
+        self.observation_space = spaces.Box(low=-1.0, high=1.0, shape=(23,))
         
         # action space: [steer, accel, brake]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,))
-        self.default_action = [0.0,1.0,0.0]
+        self.default_action = [0.0,0.5,0.0]
 
 
     def apply_settings(self):
@@ -100,21 +99,21 @@ class SimstarEnv(gym.Env):
         
         # attach appropriate sensors to the vehicle
         track_sensor_settings = simstar.DistanceSensorParameters(enable = True, 
-            draw_debug = True,
+            draw_debug = False,
             add_noise = False, location_x = 0.0, location_y = 0.0,
             location_z = 0.05, yaw_angle = 0, minimum_distance = 0.2,
             maximum_distance = 200.0, fov = 190.0, 
             update_frequency_in_hz = 60.0,
-            number_of_returns=19,query_type=simstar.QueryType.Static)
+            number_of_returns=self.track_sensor_size,query_type=simstar.QueryType.Static)
         self.track_sensor = self.main_vehicle.add_distance_sensor(track_sensor_settings)
 
         opponent_sensor_settings = simstar.DistanceSensorParameters(enable = True, 
             draw_debug = False,
             add_noise = False, location_x = 2.0, location_y = 0.0,
             location_z = 0.4, yaw_angle = 0, minimum_distance = 0.0,
-            maximum_distance = 200.0, fov = 180.0, 
+            maximum_distance = 200.0, fov = 360.0, 
             update_frequency_in_hz = 60.0,
-            number_of_returns=18,query_type=simstar.QueryType.Dynamic)
+            number_of_returns=self.opponent_sensor_size,query_type=simstar.QueryType.Dynamic)
         self.opponent_sensor = self.main_vehicle.add_distance_sensor(opponent_sensor_settings)
 
 
@@ -173,7 +172,7 @@ class SimstarEnv(gym.Env):
         reward,done = self.calculate_reward(simstar_obs)
         summary = {}
         return observation,reward,done,summary
-
+    
     def make_observation(self,simstar_obs):
         names = ['angle', 'speedX', 'speedY',
                 'opponents','track','trackPos']
@@ -186,6 +185,7 @@ class SimstarEnv(gym.Env):
                             opponents=np.array(simstar_obs['opponents'], dtype=np.float32)/200.,
                             track=np.array(simstar_obs['track'], dtype=np.float32)/200.)
     
+
     def ms_to_kmh(self,ms):
         return 3.6*ms
 
@@ -221,13 +221,14 @@ class SimstarEnv(gym.Env):
         # required to continue simulation in sync mode
         self.simstar_step()
 
-        vehicle_state = self.main_vehicle.get_vehicle_state_self_frame()
+        vehicle_state = self.main_vehicle.get_vehicle_state()
         speed_x_kmh = abs( self.ms_to_kmh( float(vehicle_state['velocity']['X_v']) ))
         speed_y_kmh = abs(self.ms_to_kmh( float(vehicle_state['velocity']['Y_v']) ))
         opponents = self.opponent_sensor.get_sensor_detections()
         track = self.track_sensor.get_sensor_detections()
         road_deviation = self.main_vehicle.get_road_deviation_info()
-        
+        if(len(track)!=self.track_sensor_size):
+            track = self.track_sensor.get_sensor_detections()
 
         speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
         speed_y_kmh = 0.0
