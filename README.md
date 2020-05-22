@@ -2,7 +2,7 @@
 
 Download Simstar from the link:
 
-https://eatron.sharepoint.com/:f:/s/Technology/Ei4iGw_Kf-JEr1WK3aLJLM0B_64FaBP4KepapIiZKATrtQ?e=bh9l26
+https://drive.google.com/open?id=1Gp-XXnOX9dbDcfqFJNJ4UtZqo9sWqjUg
 
 ### Windows 
 just click on Simstar.exe and Simstar is ready
