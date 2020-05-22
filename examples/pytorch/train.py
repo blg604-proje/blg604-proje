@@ -14,7 +14,7 @@ from simstarEnv import SimstarEnv
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-SAVE_MODEL_EACH = 50
+SAVE_MODEL_EACH = 5e3
 START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
