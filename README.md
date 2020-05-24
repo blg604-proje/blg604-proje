@@ -14,6 +14,25 @@ just click on Simstar.exe and Simstar is ready
   
     ./Simstar.sh
 
+## Requirements
+
+### Python Package Requirements
+
+#### Option 1: Install using Anaconda
+Create a new environment using anaconda. 
+
+	conda env create --file environment.yml
+
+
+#### Option 2: Manual Installation
+	
+Install required python libraries from requirements.txt by
+
+	pip install -r requirements.txt
+
+Then install **pytorch** with minimum version 1.3.0
+
+
 ## Install Python API
 
       cd PythonAPI

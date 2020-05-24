@@ -29,7 +29,7 @@ class SimstarEnv(gym.Env):
             synronized_mode=False,speed_up=1.0,width_scale=1.5):
         
         self.default_speed = 50
-        self.road_width = 6.5 * width_scale
+        self.road_width = 6.2 * width_scale
 
         self.track_sensor_size = 19
         self.opponent_sensor_size = 36
@@ -70,7 +70,7 @@ class SimstarEnv(gym.Env):
         
         # action space: [steer, accel, brake]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,))
-        self.default_action = [0.0,0.0,0.0]
+        self.default_action = [0.0,0.2,0.0]
 
 
     def apply_settings(self):
