@@ -42,7 +42,7 @@ class SimstarEnv(gym.Env):
             print("******* Make sure a Simstar instance is open and running *******")
         
 
-        self.client.reset_level()
+        #self.client.reset_level()
 
         self.client.create_road_generator(number_of_lanes=1)
 
