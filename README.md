@@ -23,6 +23,8 @@ Create a new environment using anaconda.
 
 	conda env create --file environment.yml
 
+	conda activate blg604final
+
 
 #### Option 2: Manual Installation
 	
