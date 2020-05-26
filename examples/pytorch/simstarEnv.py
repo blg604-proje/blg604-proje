@@ -43,8 +43,7 @@ class SimstarEnv(gym.Env):
         except:
             print("******* Make sure a Simstar instance is open and running *******")
         
-
-        #self.client.reset_level()
+        self.client.reset_level()
 
         self.client.create_road_generator(number_of_lanes=1)
 
@@ -78,7 +77,7 @@ class SimstarEnv(gym.Env):
 
     def reset(self):
         # delete all the actors 
-        self.client.removeActors(self.actor_list)
+        self.client.remove_actors(self.actor_list)
         self.actor_list.clear()
 
         print("[SimstarEnv] actors are destroyed")
@@ -137,15 +136,9 @@ class SimstarEnv(gym.Env):
 
         reward = progress
         
-        # for debuggging purposes
-        #print("angle: %2.2f,speed %2.2f, trackPos %2.2f"%(angle,sp,trackPos))
-
-        #print("[SimstarEnv] term1 %2.2f, term2 %2.2f, term3 %2.2f, spx %2.2f, spy%2.2f"%\
-        #    (np.cos(angle) ,-np.abs(np.sin(angle)), -np.abs(trackPos),spx,spy )   )
-
         # if collision. finish race
         if(collision):
-            print("[SimstarEnv] finish episode bc of Accident")
+            print("[SimstarEnv] finish episode bc of accident")
             reward = -20
             done = True
         
@@ -190,7 +183,7 @@ class SimstarEnv(gym.Env):
         return 3.6*ms
 
     def clear(self):
-        self.client.removeActors(self.actor_list)
+        self.client.remove_actors(self.actor_list)
 
     def end(self):
         self.clear()

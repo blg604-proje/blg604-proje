@@ -112,9 +112,9 @@ class SimstarEnv(gym.Env):
             draw_debug = False,
             add_noise = False, location_x = 2.0, location_y = 0.0,
             location_z = 0.4, yaw_angle = 0, minimum_distance = 0.0,
-            maximum_distance = 200.0, fov = 180.0, 
+            maximum_distance = 200.0, fov = 360.0, 
             update_frequency_in_hz = 60.0,
-            number_of_returns=18,query_type=simstar.QueryType.Dynamic)
+            number_of_returns=36,query_type=simstar.QueryType.Dynamic)
         self.opponent_sensor = self.main_vehicle.add_distance_sensor(opponent_sensor_settings)
 
 
