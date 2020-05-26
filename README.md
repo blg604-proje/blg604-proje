@@ -5,7 +5,7 @@ Download Simstar from the link:
 https://drive.google.com/open?id=1Gp-XXnOX9dbDcfqFJNJ4UtZqo9sWqjUg
 
 ### Windows 
-just click on Simstar.exe and Simstar is ready
+Just click on Simstar.exe and Simstar is ready
 
 ### Linux 
     cd Simstar
@@ -23,14 +23,21 @@ Create a new environment using anaconda.
 
 	conda env create --file environment.yml
 
+	conda activate final604
 
-#### Option 2: Manual Installation
+
+#### Option 2: Install using pip
 	
 Install required python libraries from requirements.txt by
 
 	pip install -r requirements.txt
 
-Then install **pytorch** with minimum version 1.3.0
+
+### Pytorch Installation
+
+Follow the official guide from the [link](https://pytorch.org).
+
+The final evaluation will be using pytorch version 1.5 and CUDA version 10.2.
 
 
 ## Install Python API
@@ -48,7 +55,7 @@ There are multiple stages that needs to be checked.
 
 Open the simstar executable, allow for networking if asked. 
 
-![opening_screen](PythonAPI/img/opening_screen.png)
+![opening_screen](PythonAPI/img/opening.png)
 
 ### 2. Test PythonAPI installation
 
@@ -68,4 +75,8 @@ Run the following with success.
 ### Optional Test
 
 To test a closed loop training with Pytorch, you can run the example DDPG agent from examples folder.
+
+	cd examples/pytorch
+
+	python train.py
 
