@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="simstar",
-    version="1.5.0",
+    version="1.5.2",
     author="Eatron Technologies",
     author_email="info@eatron.com",
     description="ADAS Simulator based on Unreal Engine",
@@ -12,6 +12,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
     ),
     install_requires=[
-          'msgpack-rpc-python', 'numpy','overpy','utm'
+          'msgpack-rpc-python', 'numpy','utm'
     ]
 )

@@ -5,9 +5,6 @@ import msgpackrpc
 
 from .types import *
 from .distance_sensor import *
-from .radar_sensor import *
-from .imu_sensor import *
-from .smart_vision_sensor import *
 
 class Vehicle():
     def __init__(self,client,ID):
@@ -28,18 +25,6 @@ class Vehicle():
         sensor_id = self.client.call("AddDistanceSensor", self._ID, sensor_parameters)
         return DistanceSensor(self.client, sensor_id)
         
-    def add_radar_sensor(self, sensor_parameters):
-        sensor_id = self.client.call("AddRadarSensor", self._ID, sensor_parameters)
-        return RadarSensor(self.client, sensor_id)
-
-    def add_imu_sensor(self):
-        sensor_id = self.client.call("AddIMUSensor", self._ID)
-        return ImuSensor(self.client, sensor_id)
-        
-    def add_smart_vision_sensor(self, sensor_parameters):
-        sensor_id = self.client.call("AddSmartVisionSensor", self._ID, sensor_parameters)
-        return SmartVisionSensor(self.client, sensor_id)
-
     # global frame
     def get_vehicle_state(self):
         return self.client.call("GetVehicleStateInfo",self._ID)

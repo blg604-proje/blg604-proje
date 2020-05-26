@@ -21,7 +21,6 @@ class VehicleType():
     
 
 class TrackName():
-    IstanbulPark = "Ist"
     DutchGrandPrix ="Dutch"
     HungaryGrandPrix = "Hungary"
 

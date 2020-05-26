@@ -25,7 +25,7 @@ Parameters Overview:
 
 class SimstarEnv(gym.Env):
 
-    def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.IstanbulPark,
+    def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
             synronized_mode=False,speed_up=1.0,width_scale=1.5):
         
         self.default_speed = 50
@@ -79,7 +79,7 @@ class SimstarEnv(gym.Env):
 
     def reset(self):
         # delete all the actors 
-        self.client.removeActors(self.actor_list)
+        self.client.remove_actors(self.actor_list)
         self.actor_list.clear()
 
         print("[SimstarEnv] actors are destroyed")
@@ -100,7 +100,7 @@ class SimstarEnv(gym.Env):
         
         # attach appropriate sensors to the vehicle
         track_sensor_settings = simstar.DistanceSensorParameters(enable = True, 
-            draw_debug = True,
+            draw_debug = False,
             add_noise = False, location_x = 0.0, location_y = 0.0,
             location_z = 0.05, yaw_angle = 0, minimum_distance = 0.2,
             maximum_distance = 200.0, fov = 190.0, 
@@ -112,9 +112,9 @@ class SimstarEnv(gym.Env):
             draw_debug = False,
             add_noise = False, location_x = 2.0, location_y = 0.0,
             location_z = 0.4, yaw_angle = 0, minimum_distance = 0.0,
-            maximum_distance = 200.0, fov = 180.0, 
+            maximum_distance = 200.0, fov = 360.0, 
             update_frequency_in_hz = 60.0,
-            number_of_returns=18,query_type=simstar.QueryType.Dynamic)
+            number_of_returns=36,query_type=simstar.QueryType.Dynamic)
         self.opponent_sensor = self.main_vehicle.add_distance_sensor(opponent_sensor_settings)
 
 
@@ -190,7 +190,7 @@ class SimstarEnv(gym.Env):
         return 3.6*ms
 
     def clear(self):
-        self.client.removeActors(self.actor_list)
+        self.client.remove_actors(self.actor_list)
 
     def end(self):
         self.clear()

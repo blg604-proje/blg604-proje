@@ -3,16 +3,13 @@ try:
 except ImportError:
     raise ImportError('pip install msgpack-rpc-python')
 
-try:
-    import numpy as np
-except ImportError:
-    raise ImportError('pip install numpy')
 
 from .types import *
 from .vehicle import * 
 from .road import *
 from .road_network_generator import *
 
+import numpy as np
 import sys
 import os
 import time 
@@ -43,8 +40,8 @@ class Client():
     def reset_level(self):
         self.client.call("OpenHighway")
         self.client.close()
-        del self.client()
-        time.sleep(3) 
+        del self.client
+        time.sleep(10) 
         self.client = msgpackrpc.Client(msgpackrpc.Address(self.host, \
                     self.port), timeout = 5, \
                 pack_encoding = 'utf-8', unpack_encoding = 'utf-8')
@@ -68,20 +65,18 @@ class Client():
         vehicle_positions = self.client.call("GetVehicleGroundTruths")
         return vehicle_positions
 
-    def getSimulatorVersion(self):
+    def get_simulator_version(self):
         version = self.client.call('GetVersion')
         return version
 
-    def changeControlHelperOption(self,option=0):
-    	self.client.call("ChangeOptionACCorLCC",option)
 
-    def autoPilotAgents(self, agents):
+    def autopilot_agents(self, agents):
         agent_ids = []
         for agent in agents:
             agent_ids.append(agent.getID())
         self.client.call("AutoPilotAgents",agent_ids)
     
-    def removeActors(self, actors):
+    def remove_actors(self, actors):
         actor_ids = []
         for actor in actors:
             actor_ids.append(actor.getID())
@@ -100,7 +95,7 @@ class Client():
         did_accident_occur = self.client.call("IsVehicleCollided")
         return did_accident_occur
 
-    def generate_race_track(self,track_name=TrackName.IstanbulPark):
+    def generate_race_track(self,track_name=TrackName.DutchGrandPrix):
         road_net_gen = RoadNetworkGenerator()
         way_points = road_net_gen.get_way_points(track_name)
         return way_points
