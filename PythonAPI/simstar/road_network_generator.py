@@ -27,15 +27,9 @@ class RoadNetworkGenerator():
         return route
 
 
-    def get_way_points(self,track_name=TrackName.IstanbulPark):
+    def get_way_points(self,track_name=TrackName.DutchGrandPrix):
         way_points = []
-        if(track_name == TrackName.IstanbulPark):
-            result = self.api.query("""
-                way(around:1500,40.954858, 29.404595)[highway=raceway][surface=asphalt];
-                (._;>;);
-                out body;
-                """)
-        elif track_name == TrackName.DutchGrandPrix:
+        if track_name == TrackName.DutchGrandPrix:
             result = self.api.query("""
                 way(around:1500,52.387149, 4.543497)[highway=raceway][wikidata=Q173083];
                 (._;>;);
