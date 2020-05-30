@@ -25,7 +25,7 @@ Parameters Overview:
 
 class SimstarEnv(gym.Env):
 
-    def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.IstanbulPark,
+    def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.DutchGrandPrix,
             synronized_mode=False,speed_up=1.0,width_scale=1.5):
         
         self.default_speed = 50
