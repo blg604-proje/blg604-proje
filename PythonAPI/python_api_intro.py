@@ -72,7 +72,7 @@ if __name__ == '__main__':
     actor_list.append(vehicle_1)
     actor_list.append(vehicle_2)
     actor_list.append(vehicle_3)
-    client.removeActors(actor_list)
+    client.remove_actors(actor_list)
     
     logging.info("PythonAPI example finished correctly")
     
