@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="simstar",
-    version="1.5.2",
+    version="1.5.3.C",
     author="Eatron Technologies",
     author_email="info@eatron.com",
     description="ADAS Simulator based on Unreal Engine",

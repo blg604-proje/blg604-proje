@@ -112,4 +112,11 @@ class Client():
     
     def blocking_tick(self):
         self.client.call("TickWithWait")
+    
+    def tick_given_times(self,tick_num):
+        return self.client.call("TickGivenTimes",tick_num)
+
+    def set_sync_timeout(self,timeout=30):
+        self.client.call("SetSyncTimeout",timeout)
+
 

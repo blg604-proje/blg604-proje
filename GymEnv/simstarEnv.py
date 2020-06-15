@@ -21,18 +21,20 @@ Parameters Overview:
     speed_up: how faster should simulation run. up to 10x. down to 0.1x
     synronized_mode: simulator waits for update signal from client if enabled
     width_scale : the scale of the road width
+    hz: sampling of the environment in hertz
 """
 
 class SimstarEnv(gym.Env):
 
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
-            synronized_mode=False,speed_up=1.0,width_scale=1.5):
+            synronized_mode=False,hz=60,speed_up=1,width_scale=1.5):
         
         self.default_speed = 50
         self.road_width = 6.5 * width_scale
-
+        self.hz = hz
         self.track_name = track 
         self.synronized_mode = synronized_mode
+        self.sync_step_num = hz//speed_up
         self.speed_up = speed_up
         self.width_scale = width_scale
         self.client = simstar.Client(host=host,port=port)
@@ -61,6 +63,9 @@ class SimstarEnv(gym.Env):
         self.client.set_road_network(track_points,
             width_scale=self.width_scale)
 
+
+        self.simstar_step(2)
+
         # a list contaning all vehicles 
         self.actor_list = []
 
@@ -72,6 +77,7 @@ class SimstarEnv(gym.Env):
         # action space: [steer, accel, brake]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,))
         self.default_action = [0.0,1.0,0.0]
+        
 
 
     def apply_settings(self):
@@ -81,12 +87,14 @@ class SimstarEnv(gym.Env):
         # delete all the actors 
         self.client.remove_actors(self.actor_list)
         self.actor_list.clear()
-
+        self.simstar_step(2)
         print("[SimstarEnv] actors are destroyed")
-        time.sleep(1)
+        time.sleep(0.5)
 
         # spawn a vehicle
         self.main_vehicle = self.client.spawn_vehicle(distance=150,lane_id=1,initial_speed=0,set_speed=0)
+
+        self.simstar_step(2)
         
         # add all actors to the acor list
         self.actor_list.append(self.main_vehicle)
@@ -94,10 +102,13 @@ class SimstarEnv(gym.Env):
         # set as display vehicle to follow from simstar
         self.client.display_vehicle(self.main_vehicle)
 
+        self.simstar_step(2)
+        
         # set drive type as API.
         self.main_vehicle.set_controller_type(simstar.DriveType.API)
         
-        
+        self.simstar_step(2)
+
         # attach appropriate sensors to the vehicle
         track_sensor_settings = simstar.DistanceSensorParameters(enable = True, 
             draw_debug = False,
@@ -108,6 +119,8 @@ class SimstarEnv(gym.Env):
             number_of_returns=19,query_type=simstar.QueryType.Static)
         self.track_sensor = self.main_vehicle.add_distance_sensor(track_sensor_settings)
 
+        self.simstar_step(2)
+        
         opponent_sensor_settings = simstar.DistanceSensorParameters(enable = True, 
             draw_debug = False,
             add_noise = False, location_x = 2.0, location_y = 0.0,
@@ -117,7 +130,8 @@ class SimstarEnv(gym.Env):
             number_of_returns=36,query_type=simstar.QueryType.Dynamic)
         self.opponent_sensor = self.main_vehicle.add_distance_sensor(opponent_sensor_settings)
 
-
+        self.simstar_step(2)
+        
         simstar_obs = self.get_simstar_obs(self.default_action)
         observation = self.make_observation(simstar_obs)
         return observation
@@ -208,9 +222,14 @@ class SimstarEnv(gym.Env):
                                     brake=brake,steer=steer)
                                 
 
-    def simstar_step(self):
+    def simstar_step(self,step_num=None):
+        if not step_num: step_num = self.sync_step_num 
         if(self.synronized_mode):
-            self.client.blocking_tick()
+            while True:
+                tick_completed = self.client.tick_given_times(step_num)
+                time.sleep(0.005)
+                if(tick_completed):
+                    break
         else:
             pass
 
@@ -257,4 +276,27 @@ class SimstarEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = SimstarEnv()
+    sync = True
+    time_to_test = 4
+    fps = 60
+    speed_up = 2
+    env = SimstarEnv(synronized_mode=sync,
+        hz=fps,speed_up=speed_up)
+    env.reset()
+    time.sleep(1)
+    print("stepping")
+    start_time = time.time()
+    for i in range(time_to_test*speed_up):
+        test_begin = time.time()
+        env.step(env.default_action)
+        step_time_diff = time.time() - test_begin
+        print("env step time",(step_time_diff)*1e3)
+        if not sync:
+            time_diff = time.time() - start_time
+            time.sleep(1/speed_up-step_time_diff)
+            if time_diff > time_to_test:
+                print("break from loop")
+                break
+            
+    env.reset()
+
