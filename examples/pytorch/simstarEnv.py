@@ -234,11 +234,11 @@ class SimstarEnv(gym.Env):
             pass
 
     def get_simstar_obs(self,action):
-        self.simstar_step()
 
         self.action_to_simstar(action)
+
         # required to continue simulation in sync mode
-        
+        self.simstar_step()
 
         vehicle_state = self.main_vehicle.get_vehicle_state_self_frame()
         speed_x_kmh = abs( self.ms_to_kmh( float(vehicle_state['velocity']['X_v']) ))
