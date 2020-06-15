@@ -23,7 +23,7 @@ if __name__ == "__main__":
         datefmt='%Y-%m-%d %H:%M:%S')
     
     logging.info("simstar env init")
-    env  = SimstarEnv(synronized_mode=True,speed_up=5,hz=60)
+    env  = SimstarEnv(synronized_mode=True,speed_up=5,hz=1)
     agent = Agent(dim_action=3)
 
     logging.info("entering main loop")

@@ -27,14 +27,16 @@ Parameters Overview:
 class SimstarEnv(gym.Env):
 
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
-            synronized_mode=False,hz=60,speed_up=1,width_scale=1.5):
+            synronized_mode=False,hz=2,speed_up=1,width_scale=1.5):
         
         self.default_speed = 50
         self.road_width = 6.5 * width_scale
+        self.fps = 60
         self.hz = hz
+        self.tick_number_to_sample = self.fps//hz
         self.track_name = track 
         self.synronized_mode = synronized_mode
-        self.sync_step_num = hz//speed_up
+        self.sync_step_num = self.tick_number_to_sample//speed_up
         self.speed_up = speed_up
         self.width_scale = width_scale
         self.client = simstar.Client(host=host,port=port)
@@ -279,9 +281,10 @@ if __name__ == "__main__":
     sync = True
     time_to_test = 4
     fps = 60
+    hz = 2
     speed_up = 2
     env = SimstarEnv(synronized_mode=sync,
-        hz=fps,speed_up=speed_up)
+        hz=2,speed_up=speed_up)
     env.reset()
     time.sleep(1)
     print("stepping")

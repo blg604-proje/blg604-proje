@@ -19,7 +19,7 @@ START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
 def train():
-    env = SimstarEnv()
+    env = SimstarEnv(synronized_mode=True,speed_up=5,hz=2)
     # total length of chosen observation states
     insize = 23
     outsize = env.action_space.shape[0]
