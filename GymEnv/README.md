@@ -35,3 +35,44 @@ Vehicle state measurements include
 - Velocity
 - Acceleration
 - Angular Acceleration
+
+
+# Multi Agent Structure
+
+In order to add another vehicle at desired velocity the following API call can be used. 
+
+
+            client.spawn_vehicle(actor= main_vehicle,distance=agent_rel_pos,initial_speed=0,set_speed=30)
+
+
+- **actor** : the actor that this new agent is going to be located relatively. If left empty, then track start location is taken as reference. 
+
+- **distance** : relative distance to reference object. In meters.
+
+- **initial_speed** : initial speed in km/h.
+
+- **set_speed** : the target speed that the agent will try to maintain. km/h.
+
+For convinience, an example agent addition has been added to simstarEnv.py. The parameters are 
+ - add_agent : Default **False**
+ - agent_set_speed : Default **30**
+ - agent_rel_pos : Default **50**
+
+# Faster Simulation
+
+You can enable faster simulation with the flag **speed_up** in the environment. Consider using Syncronous Mode when doing faster simulation.
+
+
+# Syncronous Mode
+
+If enabled, this mode allows perfect synronization. In the provided environment, **synronized_mode** flag can be made **True** to start this mode. 
+
+Parameters in this mode 
+
+- hz: Frequency of sampling from the environment. The environment will respond this many time in a second and will not return an _observation_ until given number of frames are paseed in the simulator. Please note that, from version v1.5.3.B and onward, **Simstar** comes with a fixed frame rate of 60 fps. Therefore you should consider choosing a factor of 60 when choosin hz. 
+
+- speed_up: This speeds up the simulation safely until **-5x**. Again consider _hz_ and *speed_up* with the fixed FPS of the environment 60 fps. speed_up*hz should be a factpr of 60.  
+
+- timeout. Sync Simulation blocks the simluator completely, even a new connection cannot be made. There is a default 30 seconds timeout. You can change this via
+
+    client.set_sync_timeout(<NewValue>)

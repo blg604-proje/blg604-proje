@@ -27,10 +27,16 @@ Parameters Overview:
 class SimstarEnv(gym.Env):
 
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
-            synronized_mode=False,hz=2,speed_up=1,width_scale=1.5):
+            synronized_mode=False,hz=2,speed_up=1,width_scale=1.5,
+            add_agent=False,agent_set_speed=30,agent_rel_pos=50):
         
-        self.default_speed = 50
-        self.road_width = 6.5 * width_scale
+        self.add_agent = add_agent
+        self.agent_set_speed = agent_set_speed
+        self.agent_rel_pos = agent_rel_pos
+        self.default_speed = 130
+        self.road_width = 4.5 * width_scale
+        self.track_sensor_size = 19
+        self.opponent_sensor_size = 36
         self.fps = 60
         self.hz = hz
         self.tick_number_to_sample = self.fps//hz
@@ -101,6 +107,19 @@ class SimstarEnv(gym.Env):
         # add all actors to the acor list
         self.actor_list.append(self.main_vehicle)
 
+        # Add an agent in Auto Pilot
+        self.agent = self.client.spawn_vehicle(actor= self.main_vehicle,
+            distance=self.agent_rel_pos,lane_id=1,
+            initial_speed=0,set_speed=self.agent_set_speed)
+        
+        self.actor_list.append(self.agent)
+        
+        # drive this agent in auto pilot mode.
+        agents = []
+        agents.append(self.agent)
+        self.client.autopilot_agents(agents)
+
+
         # set as display vehicle to follow from simstar
         self.client.display_vehicle(self.main_vehicle)
 
@@ -115,10 +134,10 @@ class SimstarEnv(gym.Env):
         track_sensor_settings = simstar.DistanceSensorParameters(enable = True, 
             draw_debug = False,
             add_noise = False, location_x = 0.0, location_y = 0.0,
-            location_z = 0.05, yaw_angle = 0, minimum_distance = 0.2,
+            location_z = 0.05, yaw_angle = np.pi*10/360, minimum_distance = 0.2,
             maximum_distance = 200.0, fov = 190.0, 
             update_frequency_in_hz = 60.0,
-            number_of_returns=19,query_type=simstar.QueryType.Static)
+            number_of_returns=self.track_sensor_size,query_type=simstar.QueryType.Static)
         self.track_sensor = self.main_vehicle.add_distance_sensor(track_sensor_settings)
 
         self.simstar_step(2)
@@ -216,9 +235,9 @@ class SimstarEnv(gym.Env):
         steer = float(action[0])
         throttle = float(action[1])
         brake = float(action[2])
-        steer = steer/2
+        steer = steer/8
         brake = brake/16
-        if(throttle>0.5):
+        if(brake<0.01):
             brake=0.0
         self.main_vehicle.control_vehicle(throttle=throttle,
                                     brake=brake,steer=steer)
