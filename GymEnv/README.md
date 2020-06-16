@@ -54,9 +54,9 @@ In order to add another vehicle at desired velocity the following API call can b
 - **set_speed** : the target speed that the agent will try to maintain. km/h.
 
 For convinience, an example agent addition has been added to simstarEnv.py. The parameters are 
- - add_agent : Default **False**
- - agent_set_speed : Default **30**
- - agent_rel_pos : Default **50**
+ - **add_agent** : Default **False**
+ - **agent_set_speed** : Default **30**
+ - **agent_rel_pos** : Default **50**
 
 # Faster Simulation
 
@@ -75,4 +75,5 @@ Parameters in this mode
 
 - timeout. Sync Simulation blocks the simluator completely, even a new connection cannot be made. There is a default 30 seconds timeout. You can change this via
 
-    client.set_sync_timeout(<NewValue>)
+    client.set_sync_timeout(NewValue)
+    
