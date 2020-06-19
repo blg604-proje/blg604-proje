@@ -58,6 +58,22 @@ For convinience, an example agent addition has been added to simstarEnv.py. The 
  - **agent_set_speed** : Default **30**
  - **agent_rel_pos** : Default **50**
 
+## Controlling Multiple Vehicles By API
+
+There are multiple ways of controlling a vehicle by another script using the API. Any client can be initiated and simstar observations can be created seperately. An example of this is provided in the environment. To test this feature, set the **autopilot_agent** flag to true. 
+
+To control the other agent, get obervations
+
+    observation_other_agent = env.get_agent_obs()
+
+Then select the action accoirdin to this obervation
+
+    other_vehicle_action = rl_agent.action(observation_other_agent)
+
+Finally, apply this action to other agent as 
+
+    env.set_agent_action(other_vehicle_action)
+
 # Faster Simulation
 
 You can enable faster simulation with the flag **speed_up** in the environment. Consider using Syncronous Mode when doing faster simulation.

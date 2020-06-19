@@ -28,11 +28,13 @@ class SimstarEnv(gym.Env):
 
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
             synronized_mode=False,hz=2,speed_up=1,width_scale=1.5,
-            add_agent=False,agent_set_speed=30,agent_rel_pos=50):
+            add_agent=False,agent_set_speed=30,agent_rel_pos=50,
+            autopilot_agent=True):
         
         self.add_agent = add_agent
         self.agent_set_speed = agent_set_speed
         self.agent_rel_pos = agent_rel_pos
+        self.autopilot_agent = autopilot_agent
         self.default_speed = 130
         self.road_width = 4.5 * width_scale
         self.track_sensor_size = 19
@@ -113,11 +115,13 @@ class SimstarEnv(gym.Env):
             initial_speed=0,set_speed=self.agent_set_speed)
         
         self.actor_list.append(self.agent)
-        
-        # drive this agent in auto pilot mode.
-        agents = []
-        agents.append(self.agent)
-        self.client.autopilot_agents(agents)
+        if(self.autopilot_agent):
+            # drive this agent in auto pilot mode.
+            agents = []
+            agents.append(self.agent)
+            self.client.autopilot_agents(agents)
+        else:
+            self.agent.set_controller_type(simstar.DriveType.API)
 
 
         # set as display vehicle to follow from simstar
@@ -148,7 +152,7 @@ class SimstarEnv(gym.Env):
             location_z = 0.4, yaw_angle = 0, minimum_distance = 0.0,
             maximum_distance = 200.0, fov = 360.0, 
             update_frequency_in_hz = 60.0,
-            number_of_returns=36,query_type=simstar.QueryType.Dynamic)
+            number_of_returns=self.opponent_sensor_size,query_type=simstar.QueryType.Dynamic)
         self.opponent_sensor = self.main_vehicle.add_distance_sensor(opponent_sensor_settings)
 
         self.simstar_step(2)
@@ -200,6 +204,47 @@ class SimstarEnv(gym.Env):
         
         return reward,done
 
+    def get_agent_obs(self):
+        vehicle_state = self.agent.get_vehicle_state_self_frame()
+        speed_x_kmh = abs( self.ms_to_kmh( float(vehicle_state['velocity']['X_v']) ))
+        speed_y_kmh = abs(self.ms_to_kmh( float(vehicle_state['velocity']['Y_v']) ))
+        opponents = self.opponent_sensor.get_sensor_detections()
+        track = self.track_sensor.get_sensor_detections()
+        road_deviation = self.agent.get_road_deviation_info()
+        if not len(track):
+            track = self.track_sensor.get_sensor_detections()
+            road_deviation = self.agent.get_road_deviation_info()
+        
+        speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
+        speed_y_kmh = 0.0
+        angle = float(road_deviation['yaw_dev'])
+        
+        trackPos = float(road_deviation['lat_dev'])/self.road_width
+
+        damage = bool( self.agent.check_for_collision() )
+
+        agent_simstar_obs = {'speedX': speed_x_kmh,
+                        'speedY':speed_y_kmh,
+                        'opponents':opponents ,
+                        'track': track,
+                        'angle': angle,
+                        'damage':damage,
+                        'trackPos': trackPos
+                    }
+        return self.make_observation(agent_simstar_obs)
+
+    # [steer, accel, brake] input
+    def set_agent_action(self,action):
+        steer = float(action[0])
+        throttle = float(action[1])
+        brake = float(action[2])
+        steer = steer/4
+        brake = brake/8
+        if(brake<0.01):
+            brake=0.0
+        self.agent.control_vehicle(throttle=throttle,
+                                    brake=brake,steer=steer)
+
     def step(self,action):
         simstar_obs = self.get_simstar_obs(action)
         observation = self.make_observation(simstar_obs)
@@ -229,6 +274,49 @@ class SimstarEnv(gym.Env):
 
     def end(self):
         self.clear()
+
+    def get_agent_obs(self):
+        vehicle_state = self.agent.get_vehicle_state_self_frame()
+        speed_x_kmh = abs( self.ms_to_kmh( float(vehicle_state['velocity']['X_v']) ))
+        speed_y_kmh = abs(self.ms_to_kmh( float(vehicle_state['velocity']['Y_v']) ))
+        opponents = self.opponent_sensor.get_sensor_detections()
+        track = self.track_sensor.get_sensor_detections()
+        road_deviation = self.agent.get_road_deviation_info()
+        if not len(track):
+            track = self.track_sensor.get_sensor_detections()
+            road_deviation = self.agent.get_road_deviation_info()
+        
+        speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
+        speed_y_kmh = 0.0
+        angle = float(road_deviation['yaw_dev'])
+        
+        trackPos = float(road_deviation['lat_dev'])/self.road_width
+
+        damage = bool( self.agent.check_for_collision() )
+
+        agent_simstar_obs = {'speedX': speed_x_kmh,
+                        'speedY':speed_y_kmh,
+                        'opponents':opponents ,
+                        'track': track,
+                        'angle': angle,
+                        'damage':damage,
+                        'trackPos': trackPos
+                    }
+        return self.make_observation(agent_simstar_obs)
+
+    # [steer, accel, brake] input
+    def set_agent_action(self,action):
+        steer = float(action[0])
+        throttle = float(action[1])
+        brake = float(action[2])
+        steer = steer/4
+        brake = brake/8
+        if(brake<0.01):
+            brake=0.0
+        self.agent.control_vehicle(throttle=throttle,
+                                    brake=brake,steer=steer)
+
+
 
     # [steer, accel, brake] input
     def action_to_simstar(self,action):
