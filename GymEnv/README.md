@@ -93,3 +93,18 @@ Parameters in this mode
 
     client.set_sync_timeout(NewValue)
     
+# No Rendering Mode
+
+In order to disable rendering, there are two options. 
+
+1. You can Press "X" in Simstar window. 
+
+2. You can run Simstar with the command line argument
+
+Linux:
+
+    ./SimStar.sh -no-render-simstar
+
+Windows:
+
+    SimStar.exe -no-render-simstar
