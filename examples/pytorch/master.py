@@ -19,17 +19,17 @@ from train import train
 
 
 
-SIMSTAR_SH_RELATIVE_PATH = 'SimStar/SimStar.sh'
+SIMSTAR_SH_RELATIVE_PATH = '/SimStar/SimStar.sh'
 
 
 def start_sh_script():
     sh_command = 'sh '+  CURRENT_DIR+SIMSTAR_SH_RELATIVE_PATH
-    os.popen()
+    os.popen(sh_command)
 
 if __name__ == "__main__": 
     # creating thread 
-    simstar_start_thread = threading.Thread(target=start_sh_script, args=(,)) 
-    train_thread = threading.Thread(target=train, args=(,)) 
+    simstar_start_thread = threading.Thread(target=start_sh_script) 
+    train_thread = threading.Thread(target=train) 
   
     # starting thread 1 
     simstar_start_thread.start()
