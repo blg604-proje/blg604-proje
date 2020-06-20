@@ -4,6 +4,12 @@ Download Simstar from the link:
 
 https://drive.google.com/open?id=1Gp-XXnOX9dbDcfqFJNJ4UtZqo9sWqjUg
 
+## v.1.5.3
+
+A new version of SimStar is released. It has fixed step with syncronized mode and faster simulation features. A more detailed envrironment update can be found in [GymEnv/Readme.md](GymEnv/README.md)! 
+
+Python API also has been updated for this new release, you need to install Python API again.
+
 ### Windows 
 Just click on Simstar.exe and Simstar is ready
 
