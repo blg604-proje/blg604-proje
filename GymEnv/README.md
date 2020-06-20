@@ -103,8 +103,8 @@ In order to disable rendering, there are two options.
 
 Linux:
 
-    ./SimStar.sh -no-render-simstar
+    ./SimStar.sh -no-render-simstar=1
 
 Windows:
 
-    SimStar.exe -no-render-simstar
+    SimStar.exe -no-render-simstar=1
