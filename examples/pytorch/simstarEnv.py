@@ -109,19 +109,21 @@ class SimstarEnv(gym.Env):
         # add all actors to the acor list
         self.actor_list.append(self.main_vehicle)
 
-        # Add an agent in Auto Pilot
-        self.agent = self.client.spawn_vehicle(actor= self.main_vehicle,
-            distance=self.agent_rel_pos,lane_id=1,
-            initial_speed=0,set_speed=self.agent_set_speed)
-        
-        self.actor_list.append(self.agent)
-        if(self.autopilot_agent):
-            # drive this agent in auto pilot mode.
-            agents = []
-            agents.append(self.agent)
-            self.client.autopilot_agents(agents)
-        else:
-            self.agent.set_controller_type(simstar.DriveType.API)
+        if self.add_agent:
+            # Add an agent 
+            self.agent = self.client.spawn_vehicle(actor= self.main_vehicle,
+                distance=self.agent_rel_pos,lane_id=1,
+                initial_speed=0,set_speed=self.agent_set_speed)
+            
+            self.actor_list.append(self.agent)
+            if(self.autopilot_agent):
+                # drive this agent in auto pilot mode.
+                agents = []
+                agents.append(self.agent)
+                self.client.autopilot_agents(agents)
+            else:
+                #drive agent by API controls. Break, steer, throttle
+                self.agent.set_controller_type(simstar.DriveType.API)
 
 
         # set as display vehicle to follow from simstar
