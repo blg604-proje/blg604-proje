@@ -7,6 +7,8 @@ import time
 import sys
 import os
 import pickle
+from collections import deque
+from statistics import mean
 
 try:
     import simstar
@@ -35,7 +37,8 @@ class SimstarEnv(gym.Env):
         self.agent_set_speed = agent_set_speed
         self.agent_rel_pos = agent_rel_pos
         self.autopilot_agent = autopilot_agent
-        self.default_speed = 130
+        self.default_speed = 130 #kmh
+        self.lower_speed_limit = 5 #kmh
         self.road_width = 4.5 * width_scale
         self.track_sensor_size = 19
         self.opponent_sensor_size = 36
@@ -78,6 +81,12 @@ class SimstarEnv(gym.Env):
 
         # a list contaning all vehicles 
         self.actor_list = []
+        
+        # store vehicle speeds
+        self.max_speed = 3e5
+        self.prev_speed_sample = 50
+        self.past_vehicle_speeds = deque([self.max_speed]*self.prev_speed_sample,
+                maxlen=self.prev_speed_sample) 
 
         #input space. 
         high = np.array([np.inf, np.inf,  1., 1.])
@@ -100,6 +109,10 @@ class SimstarEnv(gym.Env):
         self.simstar_step(2)
         print("[SimstarEnv] actors are destroyed")
         time.sleep(0.5)
+
+        # reset container
+        self.past_vehicle_speeds = deque([self.max_speed]*self.prev_speed_sample,
+                maxlen=self.prev_speed_sample)
 
         # spawn a vehicle
         self.main_vehicle = self.client.spawn_vehicle(distance=150,lane_id=1,initial_speed=0,set_speed=0)
@@ -202,8 +215,15 @@ class SimstarEnv(gym.Env):
             reward = -20
             done = True
         
-        # TODO: if vehicle too slow. restart
-        
+        # if vehicle too slow. restart
+        self.past_vehicle_speeds.append(sp)
+        speed_mean = mean(self.past_vehicle_speeds)
+
+        if speed_mean < self.lower_speed_limit:
+            print("[SimstarEnv] finish episode bc agent is too slow")
+            reward = -20
+            done = True
+
         return reward,done
 
     def get_agent_obs(self):
