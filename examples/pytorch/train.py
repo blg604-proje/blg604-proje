@@ -1,38 +1,40 @@
-import numpy as np
-import torch
+import sys
 import gym
-import random
-import time
-import os
+import numpy as np
+import matplotlib.pyplot as plt
+from ddpg import DDPGagent
+from utils import *
+import torch
+from simstarEnv import SimstarEnv
 from collections import namedtuple
 from collections import defaultdict
-from agent.ddpg import Ddpg
-from agent.simple_network import SimpleNet
-from agent.simple_network import DoubleInputNet
-from agent.random_process import OrnsteinUhlenbeckProcess
-from simstarEnv import SimstarEnv
+import os
+import random
+import time
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-SAVE_MODEL_EACH = 5e3
+SAVE_MODEL_EACH = 2000
+TRAIN = True
 START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
 def train():
-    env = SimstarEnv(synronized_mode=True,speed_up=5,hz=2)
+    env = SimstarEnv(synronized_mode=True,speed_up=6,hz=5)
     # total length of chosen observation states
     insize = 23
     outsize = env.action_space.shape[0]
     hyperparams = {
-                "lrvalue": 0.001,
-                "lrpolicy": 0.001,
-                "gamma": 0.985,
+                "lrvalue": 5e-4,
+                "lrpolicy": 1e-3,
+                "gamma": 0.97,
                 "episodes": 30000,
-                "buffersize": 300000,
-                "tau": 0.01,
-                "batchsize": 32,
-                "start_sigma": 0.9,
-                "end_sigma": 0.1,
+                "buffersize": 100000,
+                "tau": 1e-2,
+                "batchsize": 64,
+                "start_sigma": 0.3,
+                "end_sigma": 0,
+                "sigma_decay_len": 15000,
                 "theta": 0.15,
                 "maxlength": 1000,
                 "clipgrad": True
@@ -42,48 +44,58 @@ def train():
 
     datalog = defaultdict(list)
     
-    valuenet = DoubleInputNet(insize, outsize, 1)
-    policynet = SimpleNet(insize, outsize, activation=torch.nn.functional.tanh)
-    agent = Ddpg(valuenet, policynet, buffersize=hyprm.buffersize)
-    step_counter = 0
+    agent = DDPGagent(env, hyprm, device=device)
+    noise = OUNoise(env.action_space, hyprm)
     agent.to(device)
+    step_counter = 0
+
+    #agent.to(device)
+
     if(START_FROM_CHECKPOINT):
         step_counter = load_checkpont(agent)
 
-    
 
     for eps in range(hyprm.episodes):
         obs = env.reset()
+        noise.reset()
+
         state = np.hstack((obs.angle, obs.track,
                     obs.trackPos, obs.speedX, obs.speedY))
 
         epsisode_reward = 0
         episode_value = 0
-        sigma = (hyprm.start_sigma-hyprm.end_sigma)*(max(0, 1-eps/hyprm.episodes)) + hyprm.end_sigma
-        randomprocess = OrnsteinUhlenbeckProcess(hyprm.theta, sigma, outsize)
+
+
         for i in range(hyprm.maxlength):
-            torch_state = agent._totorch(state, torch.float32).view(1, -1)
-            action, value = agent.act(torch_state)
-            action = randomprocess.noise() + action.to("cpu").squeeze()
-            action.clamp_(-1, 1)
-            obs, reward, done, _ = env.step(action.detach().numpy())
+            action = agent.get_action(state)
+            if TRAIN:
+                action = noise.get_action(action, step_counter)
+
+            a_1 = np.clip(action[0],-1,1)
+            a_2 = np.clip(action[1],0,1)
+            a_3 = np.clip(action[2],0,1)
+
+            action = np.array([a_1, a_2, a_3])
+
+            obs, reward, done, _ = env.step(action)
+
             next_state = np.hstack((obs.angle, obs.track,
                     obs.trackPos, obs.speedX, obs.speedY))
 
-            agent.push(state, action, reward, next_state, done)
+            agent.memory.push(state, action, reward, next_state, done)
 
             epsisode_reward += reward
 
-            if len(agent.buffer) > hyprm.batchsize:
-                value_loss, policy_loss = agent.update(hyprm.gamma, hyprm.batchsize, hyprm.tau, hyprm.lrvalue, hyprm.lrpolicy, hyprm.clipgrad)
-                if random.uniform(0, 1) < 0.01:
-                    datalog["td error"].append(value_loss)
-                    datalog["avearge policy value"].append(policy_loss)
+            if TRAIN:
+                if len(agent.memory) > hyprm.batchsize:
+                    agent.update(hyprm.batchsize)
 
             if done:
                 break
+
             state = next_state
             step_counter+=1
+
             if not np.mod(step_counter,SAVE_MODEL_EACH):
                 save_checkpoint(agent,step_counter)
                 
@@ -103,8 +115,8 @@ def save_checkpoint(agent,step_counter):
     torch.save({
                 'steps': step_counter,
                 'agent_state_dict': agent.state_dict(),
-                'opt_policy_state_dict': agent.opt_policy.state_dict(),
-                'opt_value_state_dict':agent.opt_value.state_dict(),
+                'opt_policy_state_dict': agent.critic_optimizer.state_dict(),
+                'opt_value_state_dict':agent.actor_optimizer.state_dict(),
                 }, path)
 
 def load_checkpont(agent):
@@ -113,8 +125,8 @@ def load_checkpont(agent):
     try:
         checkpoint = torch.load(path)
         agent.load_state_dict(checkpoint['agent_state_dict'])
-        agent.opt_policy.load_state_dict(checkpoint['opt_policy_state_dict'])
-        agent.opt_value.load_state_dict(checkpoint['opt_value_state_dict'])
+        agent.critic_optimizer.load_state_dict(checkpoint['opt_policy_state_dict'])
+        agent.actor_optimizer.load_state_dict(checkpoint['opt_value_state_dict'])
         steps = int(checkpoint['steps'])
     except FileNotFoundError:
         print("checkpoint not found")
@@ -122,3 +134,5 @@ def load_checkpont(agent):
 
 if __name__ == "__main__":
     train()
+
+
