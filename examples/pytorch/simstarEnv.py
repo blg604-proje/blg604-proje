@@ -39,7 +39,7 @@ class SimstarEnv(gym.Env):
         self.autopilot_agent = autopilot_agent
         self.default_speed = 130 #kmh
         self.lower_speed_limit = 5 #kmh
-        self.road_width = 4.5 * width_scale
+        self.road_width = 7.0 * width_scale
         self.track_sensor_size = 19
         self.opponent_sensor_size = 36
         self.fps = 60
@@ -84,7 +84,7 @@ class SimstarEnv(gym.Env):
         
         # store vehicle speeds
         self.max_speed = 3e5
-        self.prev_speed_sample = 50
+        self.prev_speed_sample = self.fps*self.hz//self.speed_up
         self.past_vehicle_speeds = deque([self.max_speed]*self.prev_speed_sample,
                 maxlen=self.prev_speed_sample) 
 
@@ -115,7 +115,7 @@ class SimstarEnv(gym.Env):
                 maxlen=self.prev_speed_sample)
 
         # spawn a vehicle
-        self.main_vehicle = self.client.spawn_vehicle(distance=150,lane_id=1,initial_speed=0,set_speed=0)
+        self.main_vehicle = self.client.spawn_vehicle(distance=600,lane_id=1,initial_speed=0,set_speed=0)
 
         self.simstar_step(2)
         
@@ -210,13 +210,13 @@ class SimstarEnv(gym.Env):
             reward = -20
             done = True
         # if the car has returned backward, end race
-        if( abs(angle)>(np.pi)/1.8 ):
-            print("[SimstarEnv] finish episode bc of going backwards")
-            reward = -20
-            done = True
+        #if( abs(angle)>(np.pi)/1.1 ):
+        #    print("[SimstarEnv] finish episode bc of going backwards")
+        #    reward = -20
+        #    done = True
         
         # if vehicle too slow. restart
-        self.past_vehicle_speeds.append(sp)
+        self.past_vehicle_speeds.append(sp*3.6) #m/s to km/h
         speed_mean = mean(self.past_vehicle_speeds)
 
         if speed_mean < self.lower_speed_limit:
@@ -291,6 +291,7 @@ class SimstarEnv(gym.Env):
         steer = float(action[0])
         throttle = float(action[1])
         brake = float(action[2])
+        throttle = throttle/4
         steer = steer/4
         brake = brake/8
         if(brake<0.01):
@@ -305,7 +306,7 @@ class SimstarEnv(gym.Env):
         steer = float(action[0])
         throttle = float(action[1])
         brake = float(action[2])
-        steer = steer/8
+        steer = steer/2
         brake = brake/16
         if(brake<0.01):
             brake=0.0
