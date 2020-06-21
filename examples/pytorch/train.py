@@ -83,7 +83,7 @@ def train():
             obs, reward, done, _ = env.step(action)
 
             next_state = np.hstack((obs.angle, obs.track,
-                    obs.trackPos, obs.speedX, obs.speedY,obs.opponents)
+                    obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
 
             agent.memory.push(state, action, reward, next_state, done)
 
