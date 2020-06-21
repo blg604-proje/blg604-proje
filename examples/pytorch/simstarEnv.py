@@ -295,7 +295,6 @@ class SimstarEnv(gym.Env):
         steer = float(action[0])
         throttle = float(action[1])
         brake = float(action[2])
-        throttle = throttle/2
         steer = steer/2
         brake = brake/16
         if(brake<0.01):
