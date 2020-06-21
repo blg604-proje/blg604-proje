@@ -47,7 +47,7 @@ def train():
 
     datalog = defaultdict(list)
     
-    agent = DDPGagent(env, hyprm, device=device)
+    agent = DDPGagent(env, hyprm, insize=insize,device=device)
     noise = OUNoise(env.action_space, hyprm)
     agent.to(device)
     step_counter = 0

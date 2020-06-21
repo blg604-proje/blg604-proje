@@ -6,10 +6,10 @@ from models import *
 from utils import *
 
 class DDPGagent(nn.Module):
-    def __init__(self, env, params, device="cpu"):
+    def __init__(self, env,params,insize=23, device="cpu"):
         super().__init__()
         # Params
-        self.num_states = 23
+        self.num_states = insize
         self.num_actions = env.action_space.shape[0]
         self.gamma = params.gamma
         self.tau = params.tau
