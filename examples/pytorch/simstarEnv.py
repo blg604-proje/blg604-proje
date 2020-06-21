@@ -226,46 +226,6 @@ class SimstarEnv(gym.Env):
 
         return reward,done
 
-    def get_agent_obs(self):
-        vehicle_state = self.agent.get_vehicle_state_self_frame()
-        speed_x_kmh = abs( self.ms_to_kmh( float(vehicle_state['velocity']['X_v']) ))
-        speed_y_kmh = abs(self.ms_to_kmh( float(vehicle_state['velocity']['Y_v']) ))
-        opponents = self.opponent_sensor.get_sensor_detections()
-        track = self.track_sensor.get_sensor_detections()
-        road_deviation = self.agent.get_road_deviation_info()
-        if not len(track):
-            track = self.track_sensor.get_sensor_detections()
-            road_deviation = self.agent.get_road_deviation_info()
-        
-        speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
-        speed_y_kmh = 0.0
-        angle = float(road_deviation['yaw_dev'])
-        
-        trackPos = float(road_deviation['lat_dev'])/self.road_width
-
-        damage = bool( self.agent.check_for_collision() )
-
-        agent_simstar_obs = {'speedX': speed_x_kmh,
-                        'speedY':speed_y_kmh,
-                        'opponents':opponents ,
-                        'track': track,
-                        'angle': angle,
-                        'damage':damage,
-                        'trackPos': trackPos
-                    }
-        return self.make_observation(agent_simstar_obs)
-
-    # [steer, accel, brake] input
-    def set_agent_action(self,action):
-        steer = float(action[0])
-        throttle = float(action[1])
-        brake = float(action[2])
-        steer = steer/4
-        brake = brake/8
-        if(brake<0.01):
-            brake=0.0
-        self.agent.control_vehicle(throttle=throttle,
-                                    brake=brake,steer=steer)
 
     def step(self,action):
         simstar_obs = self.get_simstar_obs(action)
