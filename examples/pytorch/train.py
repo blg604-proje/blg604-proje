@@ -36,7 +36,7 @@ def train():
                 "end_sigma": 0,
                 "sigma_decay_len": 15000,
                 "theta": 0.15,
-                "maxlength": 1000,
+                "maxlength": 5000,
                 "clipgrad": True
     }
     HyperParams = namedtuple("HyperParams", hyperparams.keys())
@@ -48,11 +48,11 @@ def train():
     noise = OUNoise(env.action_space, hyprm)
     agent.to(device)
     step_counter = 0
-
+    best_reward = 0
     #agent.to(device)
 
     if(START_FROM_CHECKPOINT):
-        step_counter = load_checkpont(agent)
+        step_counter,best_reward = load_checkpoint(agent)
 
 
     for eps in range(hyprm.episodes):
@@ -97,7 +97,9 @@ def train():
             step_counter+=1
 
             if not np.mod(step_counter,SAVE_MODEL_EACH):
-                save_checkpoint(agent,step_counter)
+                save_checkpoint(agent,step_counter,epsisode_reward)
+                if epsisode_reward > best_reward:
+                    save_checkpoint(agent,step_counter,epsisode_reward,save_name="best")
                 
         datalog["epsiode length"].append(i)
         datalog["total reward"].append(epsisode_reward)
@@ -108,19 +110,21 @@ def train():
     print("")
 
 
-def save_checkpoint(agent,step_counter):
+def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint"):
     if not os.path.exists(SAVE_FOLDER):
         os.makedirs(SAVE_FOLDER)
-    path = SAVE_FOLDER + "checkpoint.dat"
+    path = SAVE_FOLDER + save_name +".dat"
     torch.save({
                 'steps': step_counter,
                 'agent_state_dict': agent.state_dict(),
                 'opt_policy_state_dict': agent.critic_optimizer.state_dict(),
                 'opt_value_state_dict':agent.actor_optimizer.state_dict(),
+                'epsisode_reward':epsisode_reward
                 }, path)
 
-def load_checkpont(agent):
+def load_checkpoint(agent):
     steps = 0
+    reward = 0 
     path = SAVE_FOLDER + "checkpoint.dat"
     try:
         checkpoint = torch.load(path)
@@ -128,9 +132,10 @@ def load_checkpont(agent):
         agent.critic_optimizer.load_state_dict(checkpoint['opt_policy_state_dict'])
         agent.actor_optimizer.load_state_dict(checkpoint['opt_value_state_dict'])
         steps = int(checkpoint['steps'])
+        if 'epsisode_reward' in checkpoint: reward = float(checkpoint['epsisode_reward']) 
     except FileNotFoundError:
         print("checkpoint not found")
-    return steps
+    return steps,reward
 
 if __name__ == "__main__":
     train()
