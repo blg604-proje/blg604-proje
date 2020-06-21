@@ -127,7 +127,7 @@ class SimstarEnv(gym.Env):
             self.agent = self.client.spawn_vehicle(actor= self.main_vehicle,
                 distance=self.agent_rel_pos,lane_id=1,
                 initial_speed=0,set_speed=self.agent_set_speed)
-            
+            self.simstar_step(2)
             self.actor_list.append(self.agent)
             if(self.autopilot_agent):
                 # drive this agent in auto pilot mode.
@@ -137,7 +137,7 @@ class SimstarEnv(gym.Env):
             else:
                 #drive agent by API controls. Break, steer, throttle
                 self.agent.set_controller_type(simstar.DriveType.API)
-
+            self.simstar_step(2)
 
         # set as display vehicle to follow from simstar
         self.client.display_vehicle(self.main_vehicle)
