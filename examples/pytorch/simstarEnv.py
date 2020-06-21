@@ -327,7 +327,7 @@ class SimstarEnv(gym.Env):
         opponents = self.opponent_sensor.get_sensor_detections()
         track = self.track_sensor.get_sensor_detections()
         road_deviation = self.main_vehicle.get_road_deviation_info()
-        if(len(track)==1 or len(opponents)==1):
+        if len(track) < self.track_sensor_size:
             self.simstar_step(1)
             opponents = self.opponent_sensor.get_sensor_detections()
             track = self.track_sensor.get_sensor_detections()
