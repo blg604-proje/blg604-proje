@@ -327,6 +327,7 @@ class SimstarEnv(gym.Env):
         opponents = self.opponent_sensor.get_sensor_detections()
         track = self.track_sensor.get_sensor_detections()
         road_deviation = self.main_vehicle.get_road_deviation_info()
+        print("track sensor size:",len(track))
         if len(track) < self.track_sensor_size:
             self.simstar_step(1)
             print("size problem len:",len(track))
