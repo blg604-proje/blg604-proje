@@ -333,6 +333,7 @@ class SimstarEnv(gym.Env):
             opponents = self.opponent_sensor.get_sensor_detections()
             track = self.track_sensor.get_sensor_detections()
             print("size problem len:",len(track))
+            self.simstar_step(1)
             track = self.track_sensor.get_sensor_detections()
             print("size problem len:",len(track))
 
