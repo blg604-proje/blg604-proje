@@ -329,8 +329,12 @@ class SimstarEnv(gym.Env):
         road_deviation = self.main_vehicle.get_road_deviation_info()
         if len(track) < self.track_sensor_size:
             self.simstar_step(1)
+            print("size problem len:",len(track))
             opponents = self.opponent_sensor.get_sensor_detections()
             track = self.track_sensor.get_sensor_detections()
+            print("size problem len:",len(track))
+            track = self.track_sensor.get_sensor_detections()
+            print("size problem len:",len(track))
 
         speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
         speed_y_kmh = 0.0
