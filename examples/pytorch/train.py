@@ -16,13 +16,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 SAVE_MODEL_EACH = 2000
 TRAIN = True
+ADD_AGENT = True
 START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
 def train():
-    env = SimstarEnv(synronized_mode=True,speed_up=5,hz=6)
+    env = SimstarEnv(synronized_mode=True,speed_up=5,hz=6,
+    add_agent=ADD_AGENT,agent_rel_pos=100,agent_set_speed=30)
     # total length of chosen observation states
-    insize = 23
+    insize = 4 + env.track_sensor_size + env.opponent_sensor_size
+
     outsize = env.action_space.shape[0]
     hyperparams = {
                 "lrvalue": 5e-4,
@@ -58,9 +61,9 @@ def train():
     for eps in range(hyprm.episodes):
         obs = env.reset()
         noise.reset()
-
         state = np.hstack((obs.angle, obs.track,
-                    obs.trackPos, obs.speedX, obs.speedY))
+                    obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
+
 
         epsisode_reward = 0
         episode_value = 0
@@ -80,7 +83,7 @@ def train():
             obs, reward, done, _ = env.step(action)
 
             next_state = np.hstack((obs.angle, obs.track,
-                    obs.trackPos, obs.speedX, obs.speedY))
+                    obs.trackPos, obs.speedX, obs.speedY,obs.opponents)
 
             agent.memory.push(state, action, reward, next_state, done)
 
@@ -110,10 +113,10 @@ def train():
     print("")
 
 
-def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint"):
+def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint_opponent"):
     if not os.path.exists(SAVE_FOLDER):
         os.makedirs(SAVE_FOLDER)
-    path = SAVE_FOLDER + save_name +".dat"
+    path = SAVE_FOLDER + save_name +"_opponent.dat"
     torch.save({
                 'steps': step_counter,
                 'agent_state_dict': agent.state_dict(),
@@ -125,7 +128,7 @@ def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint"):
 def load_checkpoint(agent):
     steps = 0
     reward = 0 
-    path = SAVE_FOLDER + "checkpoint.dat"
+    path = SAVE_FOLDER + "checkpoint_opponent.dat"
     try:
         checkpoint = torch.load(path)
         agent.load_state_dict(checkpoint['agent_state_dict'])
