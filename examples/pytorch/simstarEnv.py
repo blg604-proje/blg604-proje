@@ -330,6 +330,7 @@ class SimstarEnv(gym.Env):
         if len(track) < self.track_sensor_size:
             print("track sensor size:",len(track))
             self.simstar_step(10)
+            self.simstar_step(10)
             opponents = self.opponent_sensor.get_sensor_detections()
             track = self.track_sensor.get_sensor_detections()
 
