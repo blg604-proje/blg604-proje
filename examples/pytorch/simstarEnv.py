@@ -288,29 +288,19 @@ class SimstarEnv(gym.Env):
 
     # [steer, accel, brake] input
     def set_agent_action(self,action):
-        steer = float(action[0])
-        throttle = float(action[1])
-        brake = float(action[2])
-        throttle = throttle/4
-        steer = steer/4
-        brake = brake/8
-        if(brake<0.01):
-            brake=0.0
-        self.agent.control_vehicle(throttle=throttle,
-                                    brake=brake,steer=steer)
-
-
+        self.action_to_simstar(action,self.agent)
 
     # [steer, accel, brake] input
-    def action_to_simstar(self,action):
+    def action_to_simstar(self,action,vehicle):
         steer = float(action[0])
         throttle = float(action[1])
         brake = float(action[2])
+        throttle = throttle/2
         steer = steer/2
         brake = brake/16
         if(brake<0.01):
             brake=0.0
-        self.main_vehicle.control_vehicle(throttle=throttle,
+        vehicle.control_vehicle(throttle=throttle,
                                     brake=brake,steer=steer)
                                 
 
@@ -327,7 +317,7 @@ class SimstarEnv(gym.Env):
 
     def get_simstar_obs(self,action):
 
-        self.action_to_simstar(action)
+        self.action_to_simstar(action,self.main_vehicle)
 
         # required to continue simulation in sync mode
         self.simstar_step()
