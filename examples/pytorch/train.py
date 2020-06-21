@@ -21,7 +21,7 @@ START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
 def train():
-    env = SimstarEnv(synronized_mode=True,speed_up=5,hz=6,
+    env = SimstarEnv(synronized_mode=True,speed_up=5,hz=2,
     add_agent=ADD_AGENT,agent_rel_pos=100,agent_set_speed=30)
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size
