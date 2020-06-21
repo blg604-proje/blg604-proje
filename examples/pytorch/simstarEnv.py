@@ -7,8 +7,6 @@ import time
 import sys
 import os
 import pickle
-from collections import deque
-from statistics import mean
 
 try:
     import simstar
@@ -37,9 +35,8 @@ class SimstarEnv(gym.Env):
         self.agent_set_speed = agent_set_speed
         self.agent_rel_pos = agent_rel_pos
         self.autopilot_agent = autopilot_agent
-        self.default_speed = 130 #kmh
-        self.lower_speed_limit = 5 #kmh
-        self.road_width = 7.0 * width_scale
+        self.default_speed = 130
+        self.road_width = 4.5 * width_scale
         self.track_sensor_size = 19
         self.opponent_sensor_size = 36
         self.fps = 60
@@ -81,12 +78,6 @@ class SimstarEnv(gym.Env):
 
         # a list contaning all vehicles 
         self.actor_list = []
-        
-        # store vehicle speeds
-        self.max_speed = 3e5
-        self.prev_speed_sample = self.fps*self.hz//self.speed_up
-        self.past_vehicle_speeds = deque([self.max_speed]*self.prev_speed_sample,
-                maxlen=self.prev_speed_sample) 
 
         #input space. 
         high = np.array([np.inf, np.inf,  1., 1.])
@@ -110,33 +101,27 @@ class SimstarEnv(gym.Env):
         print("[SimstarEnv] actors are destroyed")
         time.sleep(0.5)
 
-        # reset container
-        self.past_vehicle_speeds = deque([self.max_speed]*self.prev_speed_sample,
-                maxlen=self.prev_speed_sample)
-
         # spawn a vehicle
-        self.main_vehicle = self.client.spawn_vehicle(distance=600,lane_id=1,initial_speed=0,set_speed=0)
+        self.main_vehicle = self.client.spawn_vehicle(distance=150,lane_id=1,initial_speed=0,set_speed=0)
 
         self.simstar_step(2)
         
         # add all actors to the acor list
         self.actor_list.append(self.main_vehicle)
 
-        if self.add_agent:
-            # Add an agent 
-            self.agent = self.client.spawn_vehicle(actor= self.main_vehicle,
-                distance=self.agent_rel_pos,lane_id=1,
-                initial_speed=0,set_speed=self.agent_set_speed)
-            
-            self.actor_list.append(self.agent)
-            if(self.autopilot_agent):
-                # drive this agent in auto pilot mode.
-                agents = []
-                agents.append(self.agent)
-                self.client.autopilot_agents(agents)
-            else:
-                #drive agent by API controls. Break, steer, throttle
-                self.agent.set_controller_type(simstar.DriveType.API)
+        # Add an agent in Auto Pilot
+        self.agent = self.client.spawn_vehicle(actor= self.main_vehicle,
+            distance=self.agent_rel_pos,lane_id=1,
+            initial_speed=0,set_speed=self.agent_set_speed)
+        
+        self.actor_list.append(self.agent)
+        if(self.autopilot_agent):
+            # drive this agent in auto pilot mode.
+            agents = []
+            agents.append(self.agent)
+            self.client.autopilot_agents(agents)
+        else:
+            self.agent.set_controller_type(simstar.DriveType.API)
 
 
         # set as display vehicle to follow from simstar
@@ -210,22 +195,55 @@ class SimstarEnv(gym.Env):
             reward = -20
             done = True
         # if the car has returned backward, end race
-        #if( abs(angle)>(np.pi)/1.1 ):
-        #    print("[SimstarEnv] finish episode bc of going backwards")
-        #    reward = -20
-        #    done = True
-        
-        # if vehicle too slow. restart
-        self.past_vehicle_speeds.append(sp*3.6) #m/s to km/h
-        speed_mean = mean(self.past_vehicle_speeds)
-
-        if speed_mean < self.lower_speed_limit:
-            print("[SimstarEnv] finish episode bc agent is too slow")
+        if( abs(angle)>(np.pi)/1.8 ):
+            print("[SimstarEnv] finish episode bc of going backwards")
             reward = -20
             done = True
-
+        
+        # TODO: if vehicle too slow. restart
+        
         return reward,done
 
+    def get_agent_obs(self):
+        vehicle_state = self.agent.get_vehicle_state_self_frame()
+        speed_x_kmh = abs( self.ms_to_kmh( float(vehicle_state['velocity']['X_v']) ))
+        speed_y_kmh = abs(self.ms_to_kmh( float(vehicle_state['velocity']['Y_v']) ))
+        opponents = self.opponent_sensor.get_sensor_detections()
+        track = self.track_sensor.get_sensor_detections()
+        road_deviation = self.agent.get_road_deviation_info()
+        if not len(track):
+            track = self.track_sensor.get_sensor_detections()
+            road_deviation = self.agent.get_road_deviation_info()
+        
+        speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
+        speed_y_kmh = 0.0
+        angle = float(road_deviation['yaw_dev'])
+        
+        trackPos = float(road_deviation['lat_dev'])/self.road_width
+
+        damage = bool( self.agent.check_for_collision() )
+
+        agent_simstar_obs = {'speedX': speed_x_kmh,
+                        'speedY':speed_y_kmh,
+                        'opponents':opponents ,
+                        'track': track,
+                        'angle': angle,
+                        'damage':damage,
+                        'trackPos': trackPos
+                    }
+        return self.make_observation(agent_simstar_obs)
+
+    # [steer, accel, brake] input
+    def set_agent_action(self,action):
+        steer = float(action[0])
+        throttle = float(action[1])
+        brake = float(action[2])
+        steer = steer/4
+        brake = brake/8
+        if(brake<0.01):
+            brake=0.0
+        self.agent.control_vehicle(throttle=throttle,
+                                    brake=brake,steer=steer)
 
     def step(self,action):
         simstar_obs = self.get_simstar_obs(action)
@@ -288,18 +306,28 @@ class SimstarEnv(gym.Env):
 
     # [steer, accel, brake] input
     def set_agent_action(self,action):
-        self.action_to_simstar(action,self.agent)
-
-    # [steer, accel, brake] input
-    def action_to_simstar(self,action,vehicle):
         steer = float(action[0])
         throttle = float(action[1])
         brake = float(action[2])
-        steer = steer/2
+        steer = steer/4
+        brake = brake/8
+        if(brake<0.01):
+            brake=0.0
+        self.agent.control_vehicle(throttle=throttle,
+                                    brake=brake,steer=steer)
+
+
+
+    # [steer, accel, brake] input
+    def action_to_simstar(self,action):
+        steer = float(action[0])
+        throttle = float(action[1])
+        brake = float(action[2])
+        steer = steer/8
         brake = brake/16
         if(brake<0.01):
             brake=0.0
-        vehicle.control_vehicle(throttle=throttle,
+        self.main_vehicle.control_vehicle(throttle=throttle,
                                     brake=brake,steer=steer)
                                 
 
@@ -316,7 +344,7 @@ class SimstarEnv(gym.Env):
 
     def get_simstar_obs(self,action):
 
-        self.action_to_simstar(action,self.main_vehicle)
+        self.action_to_simstar(action)
 
         # required to continue simulation in sync mode
         self.simstar_step()
@@ -327,16 +355,10 @@ class SimstarEnv(gym.Env):
         opponents = self.opponent_sensor.get_sensor_detections()
         track = self.track_sensor.get_sensor_detections()
         road_deviation = self.main_vehicle.get_road_deviation_info()
-        print("track sensor size:",len(track))
-        if len(track) < self.track_sensor_size:
+        if(len(track)==1 or len(opponents)==1):
             self.simstar_step(1)
-            print("size problem len:",len(track))
             opponents = self.opponent_sensor.get_sensor_detections()
             track = self.track_sensor.get_sensor_detections()
-            print("size problem len:",len(track))
-            self.simstar_step(2)
-            track = self.track_sensor.get_sensor_detections()
-            print("size problem len:",len(track))
 
         speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
         speed_y_kmh = 0.0
