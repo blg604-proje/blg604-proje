@@ -14,14 +14,14 @@ import time
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-SAVE_MODEL_EACH = 2000
+SAVE_MODEL_EACH = 4000
 TRAIN = True
 ADD_AGENT = True
 START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
 def train():
-    env = SimstarEnv(synronized_mode=True,speed_up=5,hz=2,
+    env = SimstarEnv(synronized_mode=True,speed_up=6,hz=5,
     add_agent=ADD_AGENT,agent_rel_pos=100,agent_set_speed=30)
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size
@@ -100,7 +100,7 @@ def train():
             step_counter+=1
 
             if not np.mod(step_counter,SAVE_MODEL_EACH):
-                save_checkpoint(agent,step_counter,epsisode_reward)
+                save_checkpoint(agent,step_counter,epsisode_reward,save_name="stop")
                 if epsisode_reward > best_reward:
                     save_checkpoint(agent,step_counter,epsisode_reward,save_name="best")
                 
@@ -113,10 +113,10 @@ def train():
     print("")
 
 
-def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint_opponent"):
+def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint"):
     if not os.path.exists(SAVE_FOLDER):
         os.makedirs(SAVE_FOLDER)
-    path = SAVE_FOLDER + save_name +"_opponent.dat"
+    path = SAVE_FOLDER + save_name +".dat"
     torch.save({
                 'steps': step_counter,
                 'agent_state_dict': agent.state_dict(),
@@ -128,7 +128,7 @@ def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint_opp
 def load_checkpoint(agent):
     steps = 0
     reward = 0 
-    path = SAVE_FOLDER + "checkpoint_opponent.dat"
+    path = SAVE_FOLDER + "checkpoint.dat"
     try:
         checkpoint = torch.load(path)
         agent.load_state_dict(checkpoint['agent_state_dict'])
@@ -136,6 +136,7 @@ def load_checkpoint(agent):
         agent.actor_optimizer.load_state_dict(checkpoint['opt_value_state_dict'])
         steps = int(checkpoint['steps'])
         if 'epsisode_reward' in checkpoint: reward = float(checkpoint['epsisode_reward']) 
+        print("starting from checkpoint!")
     except FileNotFoundError:
         print("checkpoint not found")
     return steps,reward

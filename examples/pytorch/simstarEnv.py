@@ -29,7 +29,7 @@ Parameters Overview:
 class SimstarEnv(gym.Env):
 
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
-            synronized_mode=False,hz=2,speed_up=1,width_scale=1.5,
+            synronized_mode=False,hz=10,ego_start_offset=450,speed_up=1,width_scale=1.5,
             add_agent=False,agent_set_speed=30,agent_rel_pos=50,
             autopilot_agent=True):
         
@@ -37,9 +37,10 @@ class SimstarEnv(gym.Env):
         self.agent_set_speed = agent_set_speed
         self.agent_rel_pos = agent_rel_pos
         self.autopilot_agent = autopilot_agent
+        self.ego_start_offset = ego_start_offset
         self.default_speed = 130 #kmh
         self.lower_speed_limit = 5 #kmh
-        self.road_width = 7.0 * width_scale
+        self.road_width = 6.5 * width_scale
         self.track_sensor_size = 19
         self.opponent_sensor_size = 36
         self.fps = 60
@@ -81,6 +82,9 @@ class SimstarEnv(gym.Env):
 
         # a list contaning all vehicles 
         self.actor_list = []
+
+        # a list containing all agents
+        self.agents = []
         
         # store vehicle speeds
         self.max_speed = 3e5
@@ -106,6 +110,7 @@ class SimstarEnv(gym.Env):
         # delete all the actors 
         self.client.remove_actors(self.actor_list)
         self.actor_list.clear()
+        self.agents.clear()
         self.simstar_step(2)
         print("[SimstarEnv] actors are destroyed")
         time.sleep(0.5)
@@ -115,29 +120,34 @@ class SimstarEnv(gym.Env):
                 maxlen=self.prev_speed_sample)
 
         # spawn a vehicle
-        self.main_vehicle = self.client.spawn_vehicle(distance=600,lane_id=1,initial_speed=0,set_speed=0)
+        self.main_vehicle = self.client.spawn_vehicle(distance=self.ego_start_offset,lane_id=1,initial_speed=0,set_speed=0)
 
         self.simstar_step(2)
         
+        num_agents = 7
+        agent_locs =   [50, 70,  90, 150, 250, 350, 400]
+
+        agent_speeds = [0,   0,   0,  10,  10,  20, 20 ]
+
         # add all actors to the acor list
         self.actor_list.append(self.main_vehicle)
 
         if self.add_agent:
-            # Add an agent 
-            self.agent = self.client.spawn_vehicle(actor= self.main_vehicle,
-                distance=self.agent_rel_pos,lane_id=1,
-                initial_speed=0,set_speed=self.agent_set_speed)
-            self.simstar_step(2)
-            self.actor_list.append(self.agent)
+            # add agents
+            for i in range(num_agents):
+                new_agent = self.client.spawn_vehicle(actor= self.main_vehicle,
+                    distance=agent_locs[i],lane_id=1,
+                    initial_speed=0,set_speed=agent_speeds[i])
+                self.simstar_step(2)
+                self.actor_list.append(new_agent)
+                self.agents.append(new_agent)
+
             if(self.autopilot_agent):
-                # drive this agent in auto pilot mode.
-                agents = []
-                agents.append(self.agent)
-                self.client.autopilot_agents(agents)
+                self.client.autopilot_agents(self.agents)
             else:
+                pass
                 #drive agent by API controls. Break, steer, throttle
-                self.agent.set_controller_type(simstar.DriveType.API)
-            self.simstar_step(2)
+                #self.agent.set_controller_type(simstar.DriveType.API)
 
         # set as display vehicle to follow from simstar
         self.client.display_vehicle(self.main_vehicle)
@@ -191,17 +201,11 @@ class SimstarEnv(gym.Env):
         progress = sp *(np.cos(np.abs(angle)) - np.abs(np.sin(np.abs(angle))) - np.abs(trackPos) )
 
         reward = progress
-        
-        # for debuggging purposes
-        #print("angle: %2.2f,speed %2.2f, trackPos %2.2f"%(angle,sp,trackPos))
-
-        #print("[SimstarEnv] term1 %2.2f, term2 %2.2f, term3 %2.2f, spx %2.2f, spy%2.2f"%\
-        #    (np.cos(angle) ,-np.abs(np.sin(angle)), -np.abs(trackPos),spx,spy )   )
 
         # if collision. finish race
         if(collision):
             print("[SimstarEnv] finish episode bc of Accident")
-            reward = -20
+            reward = -400
             done = True
         
         # if the car has gone off road
