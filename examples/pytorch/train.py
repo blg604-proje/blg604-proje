@@ -15,21 +15,22 @@ import time
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 SAVE_MODEL_EACH = 4000
-TRAIN = True
+TRAIN = False
 ADD_AGENT = True
 START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
 def train():
-    env = SimstarEnv(synronized_mode=True,speed_up=6,hz=5,
-    add_agent=ADD_AGENT,agent_rel_pos=100,agent_set_speed=30)
+    env = SimstarEnv(synronized_mode=True,speed_up=1,hz=10,
+    add_agent=ADD_AGENT,agent_rel_pos=100,agent_set_speed=30,
+    num_agents=7,autopilot_agent=False)
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size
 
     outsize = env.action_space.shape[0]
     hyperparams = {
                 "lrvalue": 5e-4,
-                "lrpolicy": 1e-3,
+                "lrpolicy": 1e-4,
                 "gamma": 0.97,
                 "episodes": 30000,
                 "buffersize": 100000,
@@ -85,6 +86,17 @@ def train():
             next_state = np.hstack((obs.angle, obs.track,
                     obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
 
+            #agent actions
+            agent_actions = []
+            agents_obs = env.get_agent_obs()
+            for i in range(len(agents_obs)):
+                a_obs = agents_obs[i]
+                agent_state =np.hstack((a_obs.angle, a_obs.track,
+                    a_obs.trackPos, a_obs.speedX, a_obs.speedY,a_obs.opponents))
+                agent_action = agent.get_action(agent_state)
+                agent_actions.append(agent_action)
+            env.set_agent_action(agent_actions)
+
             agent.memory.push(state, action, reward, next_state, done)
 
             epsisode_reward += reward
@@ -100,7 +112,7 @@ def train():
             step_counter+=1
 
             if not np.mod(step_counter,SAVE_MODEL_EACH):
-                save_checkpoint(agent,step_counter,epsisode_reward,save_name="stop")
+                save_checkpoint(agent,step_counter,epsisode_reward)
                 if epsisode_reward > best_reward:
                     save_checkpoint(agent,step_counter,epsisode_reward,save_name="best")
                 

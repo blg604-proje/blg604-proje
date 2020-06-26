@@ -31,16 +31,18 @@ class SimstarEnv(gym.Env):
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
             synronized_mode=False,hz=10,ego_start_offset=450,speed_up=1,width_scale=1.5,
             add_agent=False,agent_set_speed=30,agent_rel_pos=50,
-            autopilot_agent=True):
+            autopilot_agent=True,num_agents=7):
         
         self.add_agent = add_agent
         self.agent_set_speed = agent_set_speed
         self.agent_rel_pos = agent_rel_pos
         self.autopilot_agent = autopilot_agent
         self.ego_start_offset = ego_start_offset
+        self.num_agents = num_agents
+        if(self.num_agents>7): self.num_agents = 7
         self.default_speed = 130 #kmh
         self.lower_speed_limit = 5 #kmh
-        self.road_width = 6.5 * width_scale
+        self.road_width = 6.0 * width_scale
         self.track_sensor_size = 19
         self.opponent_sensor_size = 36
         self.fps = 60
@@ -124,17 +126,16 @@ class SimstarEnv(gym.Env):
 
         self.simstar_step(2)
         
-        num_agents = 7
-        agent_locs =   [50, 70,  90, 150, 250, 350, 400]
+        agent_locs =   [50, 100,  150, 200, 250, 350, 400]
 
-        agent_speeds = [0,   0,   0,  10,  10,  20, 20 ]
+        agent_speeds = [0,   0,   0,  0,     0,  0,  0 ]
 
         # add all actors to the acor list
         self.actor_list.append(self.main_vehicle)
 
         if self.add_agent:
             # add agents
-            for i in range(num_agents):
+            for i in range(self.num_agents):
                 new_agent = self.client.spawn_vehicle(actor= self.main_vehicle,
                     distance=agent_locs[i],lane_id=1,
                     initial_speed=0,set_speed=agent_speeds[i])
@@ -142,19 +143,24 @@ class SimstarEnv(gym.Env):
                 self.actor_list.append(new_agent)
                 self.agents.append(new_agent)
 
+            self.simstar_step(2) 
+
             if(self.autopilot_agent):
                 self.client.autopilot_agents(self.agents)
             else:
-                pass
+                for i in range(len(self.agents)):
+                    self.simstar_step(2)
+                    self.agents[i].set_controller_type(simstar.DriveType.API)
                 #drive agent by API controls. Break, steer, throttle
-                #self.agent.set_controller_type(simstar.DriveType.API)
+                
+        self.simstar_step(2)
 
         # set as display vehicle to follow from simstar
         self.client.display_vehicle(self.main_vehicle)
 
         self.simstar_step(2)
         
-        # set drive type as API.
+        # set dr1ive type as API.
         self.main_vehicle.set_controller_type(simstar.DriveType.API)
         
         self.simstar_step(2)
@@ -262,41 +268,48 @@ class SimstarEnv(gym.Env):
         self.clear()
 
     def get_agent_obs(self):
-        vehicle_state = self.agent.get_vehicle_state_self_frame()
-        speed_x_kmh = abs( self.ms_to_kmh( float(vehicle_state['velocity']['X_v']) ))
-        speed_y_kmh = abs(self.ms_to_kmh( float(vehicle_state['velocity']['Y_v']) ))
-        opponents = self.opponent_sensor.get_sensor_detections()
-        track = self.track_sensor.get_sensor_detections()
-        road_deviation = self.agent.get_road_deviation_info()
-        if len(track) < self.track_sensor_size or \
-                len(opponents) < self.opponent_sensor_size:
-            self.simstar_step(10)
-            self.simstar_step(10)
-            track = self.track_sensor.get_sensor_detections()
+        agents_obs = []
+        self.simstar_step(1)
+        for i in range(len(self.agents)):
+            agent = self.agents[i]
+            vehicle_state = agent.get_vehicle_state_self_frame()
+            speed_x_kmh = abs( self.ms_to_kmh( float(vehicle_state['velocity']['X_v']) ))
+            speed_y_kmh = abs(self.ms_to_kmh( float(vehicle_state['velocity']['Y_v']) ))
             opponents = self.opponent_sensor.get_sensor_detections()
-            road_deviation = self.agent.get_road_deviation_info()
-        
-        speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
-        speed_y_kmh = 0.0
-        angle = float(road_deviation['yaw_dev'])
-        
-        trackPos = float(road_deviation['lat_dev'])/self.road_width
+            track = self.track_sensor.get_sensor_detections()
+            road_deviation = agent.get_road_deviation_info()
+            if len(track) < self.track_sensor_size or \
+                    len(opponents) < self.opponent_sensor_size:
+                self.simstar_step(10)
+                self.simstar_step(10)
+                track = self.track_sensor.get_sensor_detections()
+                opponents = self.opponent_sensor.get_sensor_detections()
+                road_deviation = agent.get_road_deviation_info()
+            
+            speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
+            speed_y_kmh = 0.0
+            angle = float(road_deviation['yaw_dev'])
+            
+            trackPos = float(road_deviation['lat_dev'])/self.road_width
 
-        damage = bool( self.agent.check_for_collision() )
+            damage = bool( agent.check_for_collision() )
 
-        agent_simstar_obs = {'speedX': speed_x_kmh,
-                        'speedY':speed_y_kmh,
-                        'opponents':opponents ,
-                        'track': track,
-                        'angle': angle,
-                        'damage':damage,
-                        'trackPos': trackPos
-                    }
-        return self.make_observation(agent_simstar_obs)
-
+            agent_simstar_obs = {'speedX': speed_x_kmh,
+                            'speedY':speed_y_kmh,
+                            'opponents':opponents ,
+                            'track': track,
+                            'angle': angle,
+                            'damage':damage,
+                            'trackPos': trackPos
+                        }
+            agents_obs.append(self.make_observation(agent_simstar_obs))
+        return agents_obs
     # [steer, accel, brake] input
-    def set_agent_action(self,action):
-        self.action_to_simstar(action,self.agent)
+    def set_agent_action(self,actions):
+        for i in range(len(actions)):
+            action = actions[i]
+            agent = self.agents[i]
+            self.action_to_simstar(action,agent)
 
     # [steer, accel, brake] input
     def action_to_simstar(self,action,vehicle):
@@ -306,7 +319,7 @@ class SimstarEnv(gym.Env):
         steer = steer/2
         brake = brake/16
         if(brake<0.01):
-            brake=0.0
+            brake = 0.0
         vehicle.control_vehicle(throttle=throttle,
                                     brake=brake,steer=steer)
                                 
