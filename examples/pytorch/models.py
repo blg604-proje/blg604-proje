@@ -46,9 +46,9 @@ class Actor(nn.Module):
         accel = x[:,1].reshape(-1,1)
         brake = x[:,2].reshape(-1,1)
 
-        steer = torch.nn.functional.tanh(steer)
-        accel = torch.nn.functional.sigmoid(accel).reshape(-1,1)
-        brake = torch.nn.functional.sigmoid(brake).reshape(-1,1)
+        steer = torch.tanh(steer)
+        accel = torch.sigmoid(accel).reshape(-1,1)
+        brake = torch.sigmoid(brake).reshape(-1,1)
 
         return torch.cat((steer,accel,brake), 1)
 
