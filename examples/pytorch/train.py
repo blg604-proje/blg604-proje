@@ -20,8 +20,11 @@ ADD_AGENT = True
 START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
-def train():
-    env = SimstarEnv(synronized_mode=True,speed_up=5,hz=2,
+def train(save_name="checkpoint",port=8080,hz=5):
+    print("DEBUG--------------------",save_name)
+    print("DEBUG--------------------",save_name)
+    print("DEBUG--------------------",save_name)
+    env = SimstarEnv(port=port,synronized_mode=True,speed_up=6,hz=hz,
     add_agent=ADD_AGENT,agent_rel_pos=100,agent_set_speed=30)
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size
@@ -55,7 +58,7 @@ def train():
     #agent.to(device)
 
     if(START_FROM_CHECKPOINT):
-        step_counter,best_reward = load_checkpoint(agent)
+        step_counter,best_reward = load_checkpoint(agent,load_name=save_name)
 
 
     for eps in range(hyprm.episodes):
@@ -100,7 +103,7 @@ def train():
             step_counter+=1
 
             if not np.mod(step_counter,SAVE_MODEL_EACH):
-                save_checkpoint(agent,step_counter,epsisode_reward)
+                save_checkpoint(agent,step_counter,epsisode_reward,save_name=save_name)
                 if epsisode_reward > best_reward:
                     save_checkpoint(agent,step_counter,epsisode_reward,save_name="best")
                 
@@ -113,10 +116,10 @@ def train():
     print("")
 
 
-def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint_opponent"):
+def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint"):
     if not os.path.exists(SAVE_FOLDER):
         os.makedirs(SAVE_FOLDER)
-    path = SAVE_FOLDER + save_name +"_opponent.dat"
+    path = SAVE_FOLDER + save_name +".dat"
     torch.save({
                 'steps': step_counter,
                 'agent_state_dict': agent.state_dict(),
@@ -125,10 +128,10 @@ def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint_opp
                 'epsisode_reward':epsisode_reward
                 }, path)
 
-def load_checkpoint(agent):
+def load_checkpoint(agent,load_name="checkpoint"):
     steps = 0
     reward = 0 
-    path = SAVE_FOLDER + "checkpoint_opponent.dat"
+    path = SAVE_FOLDER + load_name +".dat"
     try:
         checkpoint = torch.load(path)
         agent.load_state_dict(checkpoint['agent_state_dict'])
