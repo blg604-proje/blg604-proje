@@ -23,6 +23,7 @@ SAVE_FOLDER = "checkpoints/"
 
 def train(save_name="checkpoint",port=8080,hz=5):
     env = SimstarEnv(port=port,synronized_mode=True,speed_up=6,hz=hz,
+    add_agent=ADD_AGENT,
     num_agents=5)
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size
