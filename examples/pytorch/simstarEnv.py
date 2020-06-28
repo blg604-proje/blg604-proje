@@ -29,7 +29,7 @@ Parameters Overview:
 class SimstarEnv(gym.Env):
 
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
-            synronized_mode=False,hz=10,ego_start_offset=800,speed_up=1,width_scale=1.5,
+            synronized_mode=False,hz=10,ego_start_offset=500,speed_up=1,width_scale=1.5,
             add_agent=False,
             autopilot_agent=True,num_agents=7,
             agent_locs =   [50,  100,  150, 200,   250, 350, 400],
