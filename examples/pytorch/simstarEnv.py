@@ -29,13 +29,15 @@ Parameters Overview:
 class SimstarEnv(gym.Env):
 
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
-            synronized_mode=False,hz=10,ego_start_offset=450,speed_up=1,width_scale=1.5,
-            add_agent=False,agent_set_speed=30,agent_rel_pos=50,
-            autopilot_agent=True,num_agents=7):
+            synronized_mode=False,hz=10,ego_start_offset=800,speed_up=1,width_scale=1.5,
+            add_agent=False,
+            autopilot_agent=True,num_agents=7,
+            agent_locs =   [50,  100,  150, 200,   250, 350, 400],
+            agent_speeds = [0,   0,   20, 30,   30,   40,  50 ]):
         
         self.add_agent = add_agent
-        self.agent_set_speed = agent_set_speed
-        self.agent_rel_pos = agent_rel_pos
+        self.agent_locs = agent_locs
+        self.agent_speeds = agent_speeds
         self.autopilot_agent = autopilot_agent
         self.ego_start_offset = ego_start_offset
         self.num_agents = num_agents
@@ -125,10 +127,6 @@ class SimstarEnv(gym.Env):
         self.main_vehicle = self.client.spawn_vehicle(distance=self.ego_start_offset,lane_id=1,initial_speed=0,set_speed=0)
 
         self.simstar_step(2)
-        
-        agent_locs =   [50, 100,  150, 200, 250, 350, 400]
-
-        agent_speeds = [0,   0,   0,  0,     0,  0,  0 ]
 
         # add all actors to the acor list
         self.actor_list.append(self.main_vehicle)
@@ -137,8 +135,8 @@ class SimstarEnv(gym.Env):
             # add agents
             for i in range(self.num_agents):
                 new_agent = self.client.spawn_vehicle(actor= self.main_vehicle,
-                    distance=agent_locs[i],lane_id=1,
-                    initial_speed=0,set_speed=agent_speeds[i])
+                    distance=self.agent_locs[i],lane_id=1,
+                    initial_speed=0,set_speed=self.agent_speeds[i])
                 self.simstar_step(2)
                 self.actor_list.append(new_agent)
                 self.agents.append(new_agent)
@@ -146,12 +144,14 @@ class SimstarEnv(gym.Env):
             self.simstar_step(2) 
 
             if(self.autopilot_agent):
+                # autopilot agents
                 self.client.autopilot_agents(self.agents)
             else:
                 for i in range(len(self.agents)):
+                    #drive agent by API controls. Break, steer, throttle
                     self.simstar_step(2)
                     self.agents[i].set_controller_type(simstar.DriveType.API)
-                #drive agent by API controls. Break, steer, throttle
+                
                 
         self.simstar_step(2)
 
