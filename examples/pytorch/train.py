@@ -20,10 +20,10 @@ ADD_AGENT = True
 START_FROM_CHECKPOINT = True
 SAVE_FOLDER = "checkpoints/"
 
-def train():
-    env = SimstarEnv(synronized_mode=True,speed_up=6,hz=10,
-    add_agent=ADD_AGENT,
-    num_agents=2,autopilot_agent=True)
+
+def train(save_name="checkpoint",port=8080,hz=5):
+    env = SimstarEnv(port=port,synronized_mode=True,speed_up=6,hz=hz,
+    num_agents=5)
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size
 
@@ -56,7 +56,7 @@ def train():
     #agent.to(device)
 
     if(START_FROM_CHECKPOINT):
-        step_counter,best_reward = load_checkpoint(agent)
+        step_counter,best_reward = load_checkpoint(agent,load_name=save_name)
 
 
     for eps in range(hyprm.episodes):
@@ -112,7 +112,7 @@ def train():
             step_counter+=1
 
             if not np.mod(step_counter,SAVE_MODEL_EACH):
-                save_checkpoint(agent,step_counter,epsisode_reward)
+                save_checkpoint(agent,step_counter,epsisode_reward,save_name=save_name)
                 if epsisode_reward > best_reward:
                     save_checkpoint(agent,step_counter,epsisode_reward,save_name="best")
                 
@@ -137,10 +137,11 @@ def save_checkpoint(agent,step_counter,epsisode_reward,save_name="checkpoint"):
                 'epsisode_reward':epsisode_reward
                 }, path)
 
-def load_checkpoint(agent):
+def load_checkpoint(agent,load_name="checkpoint"):
     steps = 0
     reward = 0 
-    path = SAVE_FOLDER + "checkpoint.dat"
+    path = SAVE_FOLDER + load_name +".dat"
+
     try:
         checkpoint = torch.load(path)
         agent.load_state_dict(checkpoint['agent_state_dict'])
