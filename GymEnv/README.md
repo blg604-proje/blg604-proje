@@ -108,3 +108,20 @@ Linux:
 Windows:
 
     SimStar.exe -no-render-simstar=1
+
+3. You can start Simstar **Witout a Window**. In this mode, there is no way to see the simulation. You have to restart simualtion without the below parameter. 
+    
+Linux:
+
+    ./SimStar.sh -nullrhi
+
+Windows:
+
+    SimStar.exe -nullrhi
+
+
+# Change default port
+
+Default Simstar port is 8080. You can change default port with command line argument.
+
+    ./SimStar.sh -api-port=8081
