@@ -15,15 +15,16 @@ import time
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 SAVE_MODEL_EACH = 4000
-TRAIN = False
+TRAIN = True
 ADD_AGENT = True
 START_FROM_CHECKPOINT = True
+AUTOPILOT_OTHER_AGENTS = True
 SAVE_FOLDER = "checkpoints/"
 
 
 def train(save_name="checkpoint",port=8080,hz=5):
     env = SimstarEnv(port=port,synronized_mode=True,speed_up=6,hz=hz,
-    add_agent=ADD_AGENT,
+    add_agent=ADD_AGENT,autopilot_agent=AUTOPILOT_OTHER_AGENTS,
     num_agents=5)
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size
@@ -87,16 +88,17 @@ def train(save_name="checkpoint",port=8080,hz=5):
             next_state = np.hstack((obs.angle, obs.track,
                     obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
 
-            #agent actions
-            agent_actions = []
-            agents_obs = env.get_agent_obs()
-            for i in range(len(agents_obs)):
-                a_obs = agents_obs[i]
-                agent_state =np.hstack((a_obs.angle, a_obs.track,
-                    a_obs.trackPos, a_obs.speedX, a_obs.speedY,a_obs.opponents))
-                agent_action = agent.get_action(agent_state)
-                agent_actions.append(agent_action)
-            env.set_agent_action(agent_actions)
+            if not AUTOPILOT_OTHER_AGENTS:
+                #agent actions
+                agent_actions = []
+                agents_obs = env.get_agent_obs()
+                for i in range(len(agents_obs)):
+                    a_obs = agents_obs[i]
+                    agent_state =np.hstack((a_obs.angle, a_obs.track,
+                        a_obs.trackPos, a_obs.speedX, a_obs.speedY,a_obs.opponents))
+                    agent_action = agent.get_action(agent_state)
+                    agent_actions.append(agent_action)
+                env.set_agent_action(agent_actions)
 
             agent.memory.push(state, action, reward, next_state, done)
 
@@ -114,9 +116,12 @@ def train(save_name="checkpoint",port=8080,hz=5):
 
             if not np.mod(step_counter,SAVE_MODEL_EACH):
                 save_checkpoint(agent,step_counter,epsisode_reward,save_name=save_name)
-                if epsisode_reward > best_reward:
-                    save_checkpoint(agent,step_counter,epsisode_reward,save_name="best")
-                
+        
+        if epsisode_reward > best_reward:
+            best_reward = epsisode_reward
+            print("best episode reward achived: ",best_reward)
+            save_checkpoint(agent,step_counter,epsisode_reward,save_name="best")
+            
         datalog["epsiode length"].append(i)
         datalog["total reward"].append(epsisode_reward)
 
