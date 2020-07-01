@@ -23,6 +23,7 @@ class VehicleType():
 class TrackName():
     DutchGrandPrix ="Dutch"
     HungaryGrandPrix = "Hungary"
+    Austria = "Austria"
 
 class ChangeDirection():
     NoChange = 0
