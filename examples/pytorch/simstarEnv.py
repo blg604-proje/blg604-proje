@@ -29,11 +29,11 @@ Parameters Overview:
 class SimstarEnv(gym.Env):
 
     def __init__(self,host="127.0.0.1",port=8080,track=simstar.TrackName.HungaryGrandPrix,
-            synronized_mode=False,hz=10,ego_start_offset=500,speed_up=1,width_scale=1.5,
+            synronized_mode=False,hz=10,ego_start_offset=150,speed_up=1,width_scale=1.5,
             add_agent=False,
             autopilot_agent=True,num_agents=7,
-            agent_locs =   [50,  100,  150, 200,   250, 350, 400],
-            agent_speeds = [0,   0,   20, 30,   30,   40,  50 ]):
+            agent_locs =   [100,  150,   200,  250,  300, 350, 400],
+            agent_speeds = [0,     0,   20,      30,   30, 40,   50]):
         
         self.add_agent = add_agent
         self.agent_locs = agent_locs
@@ -193,6 +193,7 @@ class SimstarEnv(gym.Env):
         return observation
 
     def calculate_reward(self,simstar_obs):
+        reason = ""
         collision = simstar_obs["damage"]
         reward = 0.0
         done = False
@@ -211,14 +212,17 @@ class SimstarEnv(gym.Env):
         # if collision. finish race
         if(collision):
             print("[SimstarEnv] finish episode bc of Accident")
-            reward = -400
+            reward = -1000
             done = True
+            reason = "accident"
         
         # if the car has gone off road
         if(abs(trackPos)>1.0):
             print("[SimstarEnv] finish episode bc of road deviation")
-            reward = -20
+            reward = -1000
             done = True
+            reason = "deviation"
+
         # if the car has returned backward, end race
         #if( abs(angle)>(np.pi)/1.1 ):
         #    print("[SimstarEnv] finish episode bc of going backwards")
@@ -231,10 +235,11 @@ class SimstarEnv(gym.Env):
 
         if speed_mean < self.lower_speed_limit:
             print("[SimstarEnv] finish episode bc agent is too slow")
-            reward = -20
+            reward = -1000
             done = True
+            reason = "accident"
 
-        return reward,done
+        return reward,done,reason
 
 
     def step(self,action):
@@ -242,8 +247,8 @@ class SimstarEnv(gym.Env):
         observation = self.make_observation(simstar_obs)
         #currState = np.hstack((observation.angle, observation.track, observation.trackPos,
         #                            observation.speedX, observation.speedY))
-        reward,done = self.calculate_reward(simstar_obs)
-        summary = {}
+        reward,done,reason = self.calculate_reward(simstar_obs)
+        summary = {'reason':reason}
         return observation,reward,done,summary
 
     def make_observation(self,simstar_obs):
