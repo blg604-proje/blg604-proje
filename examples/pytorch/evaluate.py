@@ -76,15 +76,17 @@ def evaluate(port=8080):
             epsisode_reward += reward
 
             if done:
-                # do not restart 
+                # do not restart at accidents
                 if "accident" != summary['end_reason']:
+                    lap_progress = env.get_lap_progress()
                     break
+                
                 
 
             state = next_state
 
         total_reward += epsisode_reward
-        print("Episode: %d, Reward: %.1f"%(i,epsisode_reward))
+        print("Episode: %d, Reward: %.1f, lap progress%.2f "%(i,epsisode_reward,lap_progress))
     
     print("Average reward over %d episodes: %.1f"%(NUM_EVAL_EPISODE,total_reward/NUM_EVAL_EPISODE))
 

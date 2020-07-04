@@ -38,3 +38,6 @@ class Vehicle():
 
     def get_road_deviation_info(self):
         return self.client.call("GetRoadDeviationInfo",self._ID)
+
+    def get_lap_progress(self):
+        return self.client.call("GetVehicleLapNumber",self._ID)

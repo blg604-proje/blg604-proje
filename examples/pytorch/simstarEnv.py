@@ -329,6 +329,9 @@ class SimstarEnv(gym.Env):
                                     brake=brake,steer=steer)
                                 
 
+    def get_lap_progress(self):
+        return self.main_vehicle.get_lap_progress()
+
     def simstar_step(self,step_num=None):
         if not step_num: step_num = self.sync_step_num 
         if(self.synronized_mode):
