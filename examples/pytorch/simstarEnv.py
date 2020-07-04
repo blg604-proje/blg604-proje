@@ -248,7 +248,7 @@ class SimstarEnv(gym.Env):
         #currState = np.hstack((observation.angle, observation.track, observation.trackPos,
         #                            observation.speedX, observation.speedY))
         reward,done,reason = self.calculate_reward(simstar_obs)
-        summary = {'reason':reason}
+        summary = {'end_reason':reason}
         return observation,reward,done,summary
 
     def make_observation(self,simstar_obs):
