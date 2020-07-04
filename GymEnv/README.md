@@ -19,9 +19,9 @@ A sensor that only detects other vehicles. 36 return from 360 degrees with 200m 
 
 Measures the following
 
-- Deviation from the center of the road in meters
+- Deviation from the center of the road in meters **track_pos**
 
-- Deviation from road orientation in radians
+- Deviation from road orientation in radians **angle**
 
 
     vehicle.get_road_deviation_info()
@@ -125,3 +125,20 @@ Windows:
 Default Simstar port is 8080. You can change default port with command line argument.
 
     ./SimStar.sh -api-port=8081
+
+# Change Track Type
+
+There are 2 tracks provided as training tracks and one track provided as validation track. Change of the track can be made by passing the track name as a parameter to environment
+
+Available tracks
+
+- Austria Grand Prix [Validation]
+
+- Dutch Grand Prix [Train]
+
+- Hungarian Grand Prix [Train]
+
+Example track start:
+
+    SimstarEnv(track_name=simstar.TrackName.Austria)
+
