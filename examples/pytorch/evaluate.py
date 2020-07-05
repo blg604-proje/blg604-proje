@@ -57,7 +57,7 @@ def evaluate(port=8080):
         state = np.hstack((obs.angle, obs.track,
                     obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
 
-
+        lap_start_time = time.time()
         epsisode_reward = 0
 
         for i in range(NUM_EVAL_STEPS):
@@ -78,15 +78,15 @@ def evaluate(port=8080):
             if done:
                 # do not restart at accidents
                 if "accident" != summary['end_reason']:
-                    lap_progress = env.get_lap_progress()
                     break
                 
                 
 
             state = next_state
-
+        lap_progress = env.get_lap_progress()
+        lap_time_passed = time.time() - lap_start_time
         total_reward += epsisode_reward
-        print("Episode: %d, Reward: %.1f, lap progress%.2f "%(i,epsisode_reward,lap_progress))
+        print("Episode: %d, Reward: %.1f, lap progress%.2f time passed: %.0fs "%(i,epsisode_reward,lap_progress,lap_time_passed))
     
     print("Average reward over %d episodes: %.1f"%(NUM_EVAL_EPISODE,total_reward/NUM_EVAL_EPISODE))
 
