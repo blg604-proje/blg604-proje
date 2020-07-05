@@ -6,9 +6,21 @@ https://drive.google.com/open?id=1Gp-XXnOX9dbDcfqFJNJ4UtZqo9sWqjUg
 
 ## v.1.5.3
 
-A new version of SimStar is released. It has fixed step with syncronized mode and faster simulation features. A more detailed envrironment update can be found in [GymEnv/Readme.md](GymEnv/README.md)! 
+A new version of SimStar is released. It has fixed step with syncronized mode and faster simulation features. 
 
 Python API also has been updated for this new release, you need to install Python API again.
+
+## v.1.5.3 Changelog
+
+Change Log:
+
+	- Run simulation in server mode without a new window.
+	
+	- Flags are added every 200meters along the track.
+
+	- Example eval script with a new evaluation track added. Lap progress and lap time is measured. Eval is fixed at 10hz sampling.
+
+Checkout [GymEnv/Readme.md](GymEnv/README.md) for details. 
 
 ### Windows 
 Just click on Simstar.exe and Simstar is ready

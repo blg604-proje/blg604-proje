@@ -142,3 +142,7 @@ Example track start:
 
     SimstarEnv(track_name=simstar.TrackName.Austria)
 
+
+![hungary_track](../PythonAPI/img/hungary.png)
+
+Hungary Grand Prix track. 
