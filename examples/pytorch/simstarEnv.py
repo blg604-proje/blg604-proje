@@ -24,6 +24,9 @@ Parameters Overview:
     synronized_mode: simulator waits for update signal from client if enabled
     width_scale : the scale of the road width
     hz: sampling of the environment in hertz
+    add_agent: add other agents or not
+    autopilot_agent: control other agents by API or let them drive themselves
+    lower_speed_limit: if the average speed is below this number for 10 seconds, reset is called
 """
 
 class SimstarEnv(gym.Env):
