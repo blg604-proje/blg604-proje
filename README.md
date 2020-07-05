@@ -10,7 +10,7 @@ A new version of SimStar is released. It has fixed step with syncronized mode an
 
 Python API also has been updated for this new release, you need to install Python API again.
 
-## v.1.5.3 Changelog
+## v.1.5.3.D Changelog
 
 Change Log:
 
