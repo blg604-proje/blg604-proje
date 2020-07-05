@@ -14,11 +14,11 @@ Python API also has been updated for this new release, you need to install Pytho
 
 Change Log:
 
-	- Run simulation in server mode without a new window.
-	
-	- Flags are added every 200meters along the track.
+- Run simulation in server mode without a new window.
 
-	- Example eval script with a new evaluation track added. Lap progress and lap time is measured. Eval is fixed at 10hz sampling.
+- Flags are added every 200meters along the track.
+
+- Example eval script with a new evaluation track added. Lap progress and lap time is measured. Eval is fixed at 10hz sampling.
 
 Checkout [GymEnv/Readme.md](GymEnv/README.md) for details. 
 
