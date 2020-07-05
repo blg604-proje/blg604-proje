@@ -55,8 +55,9 @@ In order to add another vehicle at desired velocity the following API call can b
 
 For convinience, an example agent addition has been added to simstarEnv.py. The parameters are 
  - **add_agent** : Default **False**
- - **agent_set_speed** : Default **30**
- - **agent_rel_pos** : Default **50**
+ - **num_agents**: Maximum **7**
+ - **agent_speeds** : Target speeds of the agents.  **[0,     0,   20,      30,   30, 40,   50]**
+ - **agent_locs** : Relative agent locations to main vehicle .Default **[100,  150,   200,  250,  300, 350, 400]**
 
 ## Controlling Multiple Vehicles By API
 
