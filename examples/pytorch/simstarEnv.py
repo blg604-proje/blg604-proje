@@ -32,6 +32,7 @@ class SimstarEnv(gym.Env):
             synronized_mode=False,hz=10,ego_start_offset=150,speed_up=1,width_scale=1.5,
             add_agent=False,
             autopilot_agent=True,num_agents=7,
+            lower_speed_limit = 5, #kmh
             agent_locs =   [100,  150,   200,  250,  300, 350, 400],
             agent_speeds = [0,     0,   20,      30,   30, 40,   50]):
         
@@ -43,8 +44,8 @@ class SimstarEnv(gym.Env):
         self.num_agents = num_agents
         if(self.num_agents>7): self.num_agents = 7
         self.default_speed = 130 #kmh
-        self.lower_speed_limit = 5 #kmh
         self.road_width = 6.0 * width_scale
+        self.lower_speed_limit = lower_speed_limit #kmh
         self.track_sensor_size = 19
         self.opponent_sensor_size = 36
         self.fps = 60
@@ -201,7 +202,7 @@ class SimstarEnv(gym.Env):
         trackPos =  simstar_obs['trackPos']
         spx = simstar_obs['speedX']
         spy = simstar_obs['speedY']
-        sp = np.sqrt(spx*spx + spy*spy)
+        sp = np.sqrt(spx*spx + spy*spy) / 3.6 #m/s
         angle = simstar_obs['angle']
 
  
@@ -230,7 +231,7 @@ class SimstarEnv(gym.Env):
         #    done = True
         
         # if vehicle too slow. restart
-        self.past_vehicle_speeds.append(sp*3.6) #m/s to km/h
+        self.past_vehicle_speeds.append(sp) #km/h
         speed_mean = mean(self.past_vehicle_speeds)
 
         if speed_mean < self.lower_speed_limit:
