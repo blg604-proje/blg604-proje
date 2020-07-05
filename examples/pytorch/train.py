@@ -11,6 +11,7 @@ from collections import defaultdict
 import os
 import random
 import time
+import simstar
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -22,9 +23,14 @@ AUTOPILOT_OTHER_AGENTS = True
 SAVE_FOLDER = "checkpoints/"
 
 
-def train(save_name="checkpoint",port=8080,hz=5):
-    env = SimstarEnv(port=port,synronized_mode=True,speed_up=6,hz=hz,
-    add_agent=ADD_AGENT,autopilot_agent=AUTOPILOT_OTHER_AGENTS,
+def train(save_name="checkpoint",port=8080,hz=10):
+    env = SimstarEnv(track=simstar.TrackName.HungaryGrandPrix,
+    port=port,synronized_mode=True,speed_up=6,hz=hz,
+    lower_speed_limit=20,
+    add_agent=ADD_AGENT,
+    agent_locs = [100,115,120,200,300],
+    agent_speeds=[  0,  0, 10, 10, 20],
+    autopilot_agent=AUTOPILOT_OTHER_AGENTS,
     num_agents=5)
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size
@@ -34,7 +40,7 @@ def train(save_name="checkpoint",port=8080,hz=5):
                 "lrvalue": 5e-4,
                 "lrpolicy": 1e-4,
                 "gamma": 0.97,
-                "episodes": 30000,
+                "episodes": 3000,
                 "buffersize": 100000,
                 "tau": 1e-2,
                 "batchsize": 64,
