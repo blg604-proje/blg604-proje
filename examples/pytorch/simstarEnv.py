@@ -216,14 +216,14 @@ class SimstarEnv(gym.Env):
         # if collision. finish race
         if(collision):
             print("[SimstarEnv] finish episode bc of Accident")
-            reward = -1000
+            reward = -20
             done = True
             reason = "accident"
         
         # if the car has gone off road
         if(abs(trackPos)>1.0):
             print("[SimstarEnv] finish episode bc of road deviation")
-            reward = -1000
+            reward = -20
             done = True
             reason = "deviation"
 
@@ -239,9 +239,9 @@ class SimstarEnv(gym.Env):
 
         if speed_mean < self.lower_speed_limit:
             print("[SimstarEnv] finish episode bc agent is too slow")
-            reward = -1000
+            reward = -20
             done = True
-            reason = "accident"
+            reason = "speed_limit"
 
         return reward,done,reason
 
@@ -327,7 +327,7 @@ class SimstarEnv(gym.Env):
         brake = float(action[2])
         steer = steer/2
         brake = brake/16
-        if(brake<0.01):
+        if(brake<0.02):
             brake = 0.0
         vehicle.control_vehicle(throttle=throttle,
                                     brake=brake,steer=steer)
