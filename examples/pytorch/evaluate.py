@@ -22,9 +22,10 @@ NUM_EVAL_STEPS = 4000
 
 def evaluate(port=8080):
     env = SimstarEnv(track=simstar.TrackName.Austria,port=port,
-    synronized_mode=True,speed_up=1,hz=10,
+    synronized_mode=True,speed_up=2,hz=10,
     add_agent=True,
-    num_agents=4)
+    agent_locs = [10,20,30,40,50],
+    num_agents=5)
     
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size + env.opponent_sensor_size

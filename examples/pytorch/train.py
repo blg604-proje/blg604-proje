@@ -17,30 +17,30 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 SAVE_MODEL_EACH = 4000
 TRAIN = True
-ADD_AGENT = True
+ADD_AGENT = False
 START_FROM_CHECKPOINT = True
 AUTOPILOT_OTHER_AGENTS = True
 SAVE_FOLDER = "checkpoints/"
 
 
-def train(save_name="checkpoint",port=8080,hz=10):
+def train(save_name="checkpoint",port=8181,hz=10):
     env = SimstarEnv(track=simstar.TrackName.HungaryGrandPrix,
     port=port,synronized_mode=True,speed_up=6,hz=hz,
-    lower_speed_limit=20,
+    lower_speed_limit=5,
     add_agent=ADD_AGENT,
     agent_locs = [100,115,120,200,300],
-    agent_speeds=[  0,  0, 10, 10, 20],
+    agent_speeds=[  0,  0, 0, 0, 0],
     autopilot_agent=AUTOPILOT_OTHER_AGENTS,
     num_agents=5)
     # total length of chosen observation states
-    insize = 4 + env.track_sensor_size + env.opponent_sensor_size
+    insize = 4 + env.track_sensor_size
 
     outsize = env.action_space.shape[0]
     hyperparams = {
                 "lrvalue": 5e-4,
-                "lrpolicy": 1e-4,
+                "lrpolicy": 1e-3,
                 "gamma": 0.97,
-                "episodes": 3000,
+                "episodes": 9000,
                 "buffersize": 100000,
                 "tau": 1e-2,
                 "batchsize": 64,
@@ -71,12 +71,12 @@ def train(save_name="checkpoint",port=8080,hz=10):
         obs = env.reset()
         noise.reset()
         state = np.hstack((obs.angle, obs.track,
-                    obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
+                    obs.trackPos, obs.speedX, obs.speedY))
 
 
         epsisode_reward = 0
         episode_value = 0
-
+        lap_start = env.get_lap_progress()
 
         for i in range(hyprm.maxlength):
             action = agent.get_action(state)
@@ -92,16 +92,16 @@ def train(save_name="checkpoint",port=8080,hz=10):
             obs, reward, done, _ = env.step(action)
 
             next_state = np.hstack((obs.angle, obs.track,
-                    obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
+                    obs.trackPos, obs.speedX, obs.speedY))
 
             if not AUTOPILOT_OTHER_AGENTS:
                 #agent actions
                 agent_actions = []
                 agents_obs = env.get_agent_obs()
-                for i in range(len(agents_obs)):
-                    a_obs = agents_obs[i]
+                for j in range(len(agents_obs)):
+                    a_obs = agents_obs[j]
                     agent_state =np.hstack((a_obs.angle, a_obs.track,
-                        a_obs.trackPos, a_obs.speedX, a_obs.speedY,a_obs.opponents))
+                        a_obs.trackPos, a_obs.speedX, a_obs.speedY,a))
                     agent_action = agent.get_action(agent_state)
                     agent_actions.append(agent_action)
                 env.set_agent_action(agent_actions)
@@ -121,18 +121,20 @@ def train(save_name="checkpoint",port=8080,hz=10):
             step_counter+=1
 
             if not np.mod(step_counter,SAVE_MODEL_EACH):
-                save_checkpoint(agent,step_counter,epsisode_reward,save_name=save_name)
+                save_checkpoint(agent,step_counter,epsisode_reward,save_name=save_name+"_"+str(step_counter))
         
         if epsisode_reward > best_reward:
             best_reward = epsisode_reward
             print("best episode reward achived: ",best_reward)
-            save_checkpoint(agent,step_counter,epsisode_reward,save_name="best")
+            round_reward = int(epsisode_reward)
+            save_checkpoint(agent,step_counter,epsisode_reward,save_name="best___"+str(round_reward))
             
         datalog["epsiode length"].append(i)
         datalog["total reward"].append(epsisode_reward)
 
         avearage_reward = torch.mean(torch.tensor(datalog["total reward"][-20:])).item()
-        print("\r Processs percentage: {:2.1f}%, Average reward: {:2.3f}".format(eps/hyprm.episodes*100, avearage_reward), end="", flush=True)
+        lap_progress = env.get_lap_progress() - lap_start
+        print("\r Processs percentage: {:2.1f}%, Average reward: {:2.3f} lap progress:{:2.1f} ".format(eps/hyprm.episodes*100, avearage_reward,lap_progress*100), flush=True)
 
     print("")
 
