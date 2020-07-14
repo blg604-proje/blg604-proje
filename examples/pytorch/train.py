@@ -23,15 +23,13 @@ AUTOPILOT_OTHER_AGENTS = True
 SAVE_FOLDER = "checkpoints/"
 
 
-def train(save_name="checkpoint",port=8181,hz=10):
+def train(save_name="checkpoint",port=8080,hz=10):
     env = SimstarEnv(track=simstar.TrackName.HungaryGrandPrix,
     port=port,synronized_mode=True,speed_up=6,hz=hz,
     lower_speed_limit=5,
-    add_agent=ADD_AGENT,
-    agent_locs = [100,115,120,200,300],
-    agent_speeds=[  0,  0, 0, 0, 0],
-    autopilot_agent=AUTOPILOT_OTHER_AGENTS,
-    num_agents=5)
+    add_agent=ADD_AGENT
+    )
+    
     # total length of chosen observation states
     insize = 4 + env.track_sensor_size
 
