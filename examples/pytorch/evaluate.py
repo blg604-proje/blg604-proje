@@ -17,18 +17,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 MODEL_NAME_TO_EVAL = "checkpoints/best.dat"
 
-NUM_EVAL_EPISODE = 5
+NUM_EVAL_EPISODE = 3
 NUM_EVAL_STEPS = 4000
 
 def evaluate(port=8080):
     env = SimstarEnv(track=simstar.TrackName.Austria,port=port,
-    synronized_mode=True,speed_up=2,hz=10,
-    add_agent=True,
-    agent_locs = [10,20,30,40,50],
-    num_agents=5)
+    synronized_mode=True,speed_up=1,hz=10,
+    add_agent=False)
     
     # total length of chosen observation states
-    insize = 4 + env.track_sensor_size + env.opponent_sensor_size
+    insize = 4 + env.track_sensor_size 
 
     hyperparams = {
                 "lrvalue": 5e-4,
@@ -56,7 +54,7 @@ def evaluate(port=8080):
     for eps in range(NUM_EVAL_EPISODE):
         obs = env.reset()
         state = np.hstack((obs.angle, obs.track,
-                    obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
+                    obs.trackPos, obs.speedX, obs.speedY))
 
         lap_start_time = time.time()
         epsisode_reward = 0
@@ -72,18 +70,15 @@ def evaluate(port=8080):
             obs, reward, done, summary = env.step(action)
 
             next_state = np.hstack((obs.angle, obs.track,
-                    obs.trackPos, obs.speedX, obs.speedY,obs.opponents))
+                    obs.trackPos, obs.speedX, obs.speedY))
 
             epsisode_reward += reward
 
             if done:
-                # do not restart at accidents
-                if "accident" != summary['end_reason']:
-                    break
-                
-                
+                break
 
             state = next_state
+
         lap_progress = env.get_lap_progress()
         lap_time_passed = time.time() - lap_start_time
         total_reward += epsisode_reward
