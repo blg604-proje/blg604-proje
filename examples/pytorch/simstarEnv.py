@@ -360,12 +360,14 @@ class SimstarEnv(gym.Env):
         opponents = self.opponent_sensor.get_sensor_detections()
         track = self.track_sensor.get_sensor_detections()
         road_deviation = self.main_vehicle.get_road_deviation_info()
-        if len(track) < self.track_sensor_size or \
-                len(opponents) < self.opponent_sensor_size:
-            self.simstar_step(10)
+        retry_counter = 0
+        while len(track) < self.track_sensor_size or \
+                len(opponents) < self.opponent_sensor_size :
             self.simstar_step(10)
             opponents = self.opponent_sensor.get_sensor_detections()
             track = self.track_sensor.get_sensor_detections()
+            retry_counter+=1
+            if retry_counter> 100: raise RuntimeError("Track Sensor shape error. Exited")
 
         speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
         speed_y_kmh = 0.0
