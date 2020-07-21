@@ -76,7 +76,10 @@ class SimstarEnv(gym.Env):
         try:
             with open(str(self.track_name)+".pkl", "rb") as fp:
                 track_points = pickle.load(fp)
-        except:
+        except FileNotFoundError:
+            # Temporary solution to Austria Grand Prix retrievel problem. 
+            if(self.track_name==simstar.TrackName.Austria):
+                raise FileNotFoundError("make sure Austria.pkl is in the Python path")
             track_points = self.client.generate_race_track(self.track_name)
             with open(str(self.track_name)+".pkl", "wb") as fp: 
                 pickle.dump(track_points, fp)
@@ -397,12 +400,12 @@ class SimstarEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    sync = True
+    sync = False
     time_to_test = 4
     fps = 60
     hz = 2
     speed_up = 2
-    env = SimstarEnv(synronized_mode=sync,
+    env = SimstarEnv(track=simstar.TrackName.Austria, synronized_mode=sync,
         hz=2,speed_up=speed_up)
     env.reset()
     time.sleep(1)
