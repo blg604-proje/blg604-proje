@@ -43,7 +43,7 @@ class RoadNetworkGenerator():
                 """)
         elif track_name == TrackName.Austria:
             result = self.api.query("""
-                way(around:1500,47.219500, 14.766063)[highway=raceway][name="Red Bull Ring"];
+                way(around:1500,47.219500, 14.766063)[highway=raceway][surface=asphalt][source=geoimage];
                 (._;>;);
                 out body;
                 """)
