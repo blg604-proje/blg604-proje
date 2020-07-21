@@ -107,7 +107,7 @@ class SimstarEnv(gym.Env):
         
         # action space: [steer, accel, brake]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,))
-        self.default_action = [0.0,1.0,0.0]
+        self.default_action = [0.0,0.0,0.0]
         
 
 
