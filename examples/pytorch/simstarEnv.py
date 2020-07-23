@@ -168,7 +168,7 @@ class SimstarEnv(gym.Env):
         self.simstar_step(2)
         
         # set dr1ive type as API.
-        self.main_vehicle.set_controller_type(simstar.DriveType.API)
+        self.main_vehicle.set_controller_type(simstar.DriveType.Keyboard)
         
         self.simstar_step(2)
 
@@ -376,7 +376,13 @@ class SimstarEnv(gym.Env):
         speed_y_kmh = 0.0
         # deviation from road in radians
         angle = float(road_deviation['yaw_dev'])
+        correct_angle = angle
+        if abs(angle)>np.pi:
+            correct_angle = -1*np.sign(angle)*(2*np.pi - abs(angle))
         
+        angle_as_degree = angle /np.pi * 180
+        correct_angle_degree =  correct_angle /np.pi * 180
+        print("angle %2.3f correct: %2.3f"%(angle_as_degree,correct_angle_degree))
         # deviation from road center in meters
         trackPos = float(road_deviation['lat_dev'])/self.road_width
 
@@ -401,27 +407,18 @@ class SimstarEnv(gym.Env):
 
 if __name__ == "__main__":
     sync = False
-    time_to_test = 4
     fps = 60
-    hz = 2
     speed_up = 2
-    env = SimstarEnv(track=simstar.TrackName.Austria, synronized_mode=sync,
-        hz=2,speed_up=speed_up)
+    env = SimstarEnv(track=simstar.TrackName.DutchGrandPrix, synronized_mode=sync,
+        speed_up=speed_up)
     env.reset()
     time.sleep(1)
-    print("stepping")
-    start_time = time.time()
-    for i in range(time_to_test*speed_up):
-        test_begin = time.time()
-        env.step(env.default_action)
-        step_time_diff = time.time() - test_begin
-        print("env step time",(step_time_diff)*1e3)
-        if not sync:
-            time_diff = time.time() - start_time
-            time.sleep(1/speed_up-step_time_diff)
-            if time_diff > time_to_test:
-                print("break from loop")
-                break
-            
-    env.reset()
+    
+    try:
+        while True:
+            env.step(env.default_action)
+            time.sleep(0.3)
+    except KeyboardInterrupt:
+        print('interrupted!')
+
 
