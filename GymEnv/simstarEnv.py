@@ -76,7 +76,10 @@ class SimstarEnv(gym.Env):
         try:
             with open(str(self.track_name)+".pkl", "rb") as fp:
                 track_points = pickle.load(fp)
-        except:
+        except FileNotFoundError:
+            # Temporary solution to Austria Grand Prix retrievel problem. 
+            if(self.track_name==simstar.TrackName.Austria):
+                raise FileNotFoundError("make sure Austria.pkl is in the Python path")
             track_points = self.client.generate_race_track(self.track_name)
             with open(str(self.track_name)+".pkl", "wb") as fp: 
                 pickle.dump(track_points, fp)
@@ -107,7 +110,7 @@ class SimstarEnv(gym.Env):
         
         # action space: [steer, accel, brake]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,))
-        self.default_action = [0.0,1.0,0.0]
+        self.default_action = [0.0,0.0,0.0]
         
 
 
@@ -360,18 +363,23 @@ class SimstarEnv(gym.Env):
         opponents = self.opponent_sensor.get_sensor_detections()
         track = self.track_sensor.get_sensor_detections()
         road_deviation = self.main_vehicle.get_road_deviation_info()
-        if len(track) < self.track_sensor_size or \
-                len(opponents) < self.opponent_sensor_size:
-            self.simstar_step(10)
+        retry_counter = 0
+        while len(track) < self.track_sensor_size or \
+                len(opponents) < self.opponent_sensor_size :
             self.simstar_step(10)
             opponents = self.opponent_sensor.get_sensor_detections()
             track = self.track_sensor.get_sensor_detections()
+            retry_counter+=1
+            if retry_counter> 100: raise RuntimeError("Track Sensor shape error. Exited")
 
         speed_x_kmh = np.sqrt(speed_x_kmh*speed_x_kmh + speed_y_kmh*speed_y_kmh)
         speed_y_kmh = 0.0
         # deviation from road in radians
         angle = float(road_deviation['yaw_dev'])
         
+        if abs(angle)>np.pi:
+            angle = -1*np.sign(angle)*(2*np.pi - abs(angle))
+
         # deviation from road center in meters
         trackPos = float(road_deviation['lat_dev'])/self.road_width
 
@@ -395,12 +403,12 @@ class SimstarEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    sync = True
+    sync = False
     time_to_test = 4
     fps = 60
     hz = 2
     speed_up = 2
-    env = SimstarEnv(synronized_mode=sync,
+    env = SimstarEnv(track=simstar.TrackName.Austria, synronized_mode=sync,
         hz=2,speed_up=speed_up)
     env.reset()
     time.sleep(1)
