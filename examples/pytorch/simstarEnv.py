@@ -377,6 +377,9 @@ class SimstarEnv(gym.Env):
         # deviation from road in radians
         angle = float(road_deviation['yaw_dev'])
         
+        if abs(angle)>np.pi:
+            angle = -1*np.sign(angle)*(2*np.pi - abs(angle))
+
         # deviation from road center in meters
         trackPos = float(road_deviation['lat_dev'])/self.road_width
 
