@@ -10,5 +10,5 @@ pylint==2.4.4
 scipy==1.4.1
 torch==1.5.0
 torchvision==0.6.0
-tornado==4.5.3
+tornado==6.3.3
 utm==0.5.0
